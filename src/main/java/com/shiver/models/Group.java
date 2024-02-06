@@ -4,13 +4,15 @@ import java.util.Date;
 import java.util.List;
 
 public interface Group {
-    GroupMember getAdmin();
+    CharSequence getGroupId();
 
-    List<GroupMember> getMemberList();
+    CharSequence getAdminId();
 
-    void addMember(GroupMember groupMember);
+    List<CharSequence> getMemberIdList();
 
-    boolean removeMember(GroupMember groupMember);
+    void addMember(CharSequence groupMember);
+
+    boolean removeMember(CharSequence groupMember);
 
     int getGroupIteration();
 

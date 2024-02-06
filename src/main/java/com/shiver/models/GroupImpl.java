@@ -3,40 +3,49 @@ package com.shiver.models;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+import java.util.UUID;
 
 public class GroupImpl implements Group {
-    private GroupMember admin = null;
-    private List<GroupMember> members = null;
+    private final CharSequence groupId;
+    private final CharSequence adminId;
+    private final List<CharSequence> memberIds;
     private int groupIteration = 0;
-    private Date creationDate = null;
+    private final Date creationDate;
 
-    public GroupImpl(GroupMember admin, Date creationDate) {
-        this.admin = admin;
+    public GroupImpl(CharSequence adminId, CharSequence groupId, Date creationDate) {
+        this.adminId = adminId;
         this.creationDate = creationDate;
 
-        this.members = new ArrayList<>();
-        members.add(admin);
+        this.groupId = groupId;
+
+        this.memberIds = new ArrayList<>();
+        memberIds.add(adminId);
     }
 
     @Override
-    public GroupMember getAdmin() {
-        return admin;
+    public CharSequence getGroupId() {
+        return groupId;
     }
 
     @Override
-    public List<GroupMember> getMemberList() {
-        return new ArrayList<>(members);
+    public CharSequence getAdminId() {
+        return adminId;
     }
 
     @Override
-    public void addMember(GroupMember groupMember) {
-        members.add(groupMember);
+    public List<CharSequence> getMemberIdList() {
+        return new ArrayList<>(memberIds);
+    }
+
+    @Override
+    public void addMember(CharSequence groupMember) {
+        memberIds.add(groupMember);
         groupIteration++;
     }
 
     @Override
-    public boolean removeMember(GroupMember groupMember) {
-        boolean success = members.remove(groupMember);
+    public boolean removeMember(CharSequence groupMember) {
+        boolean success = memberIds.remove(groupMember);
         if (success) {
             groupIteration++;
         }

@@ -1,25 +1,24 @@
 package com.shiver.components;
 
-import com.shiver.SingleGroupStorage;
+import com.shiver.ShiverSecurity;
+import com.shiver.GroupStorage;
 import net.sharksystem.SharkComponent;
 import net.sharksystem.SharkComponentFactory;
-import net.sharksystem.pki.SharkPKIComponent;
 
 public class SharkShiverComponentFactory implements SharkComponentFactory {
-
-    private SharkPKIComponent sharkPKIComponent = null;
-    private SingleGroupStorage singleGroupStorage = null;
+    private GroupStorage groupStorage = null;
+    private ShiverSecurity shiverSecurity = null;
     private SharkShiverComponentImpl instance = null;
 
-    public SharkShiverComponentFactory(SharkPKIComponent sharkPKIComponent, SingleGroupStorage singleGroupStorage) {
-        this.sharkPKIComponent = sharkPKIComponent;
-        this.singleGroupStorage = singleGroupStorage;
+    public SharkShiverComponentFactory(GroupStorage groupStorage, ShiverSecurity shiverSecurity) {
+        this.groupStorage = groupStorage;
+        this.shiverSecurity = shiverSecurity;
     }
 
     @Override
     public SharkComponent getComponent() {
         if (instance == null) {
-            return new SharkShiverComponentImpl(sharkPKIComponent, singleGroupStorage);
+            return new SharkShiverComponentImpl(groupStorage, shiverSecurity);
         } else {
             return instance;
         }

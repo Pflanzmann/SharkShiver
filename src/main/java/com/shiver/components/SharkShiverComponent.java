@@ -1,11 +1,11 @@
 package com.shiver.components;
 
+import com.shiver.exceptions.NoGroupAvailableException;
+import com.shiver.exceptions.ShiverPermissionDeniedException;
+import com.shiver.models.Group;
 import net.sharksystem.SharkComponent;
 import net.sharksystem.asap.ASAPException;
 import net.sharksystem.asap.ASAPMessages;
-import com.shiver.exceptions.NoGroupAvailableException;
-import com.shiver.models.Group;
-import com.shiver.models.GroupMember;
 
 import java.io.IOException;
 
@@ -14,11 +14,11 @@ public interface SharkShiverComponent extends SharkComponent {
 
     Group createGroup() throws ASAPException;
 
-    void addPeerToGroup(GroupMember groupMember) throws ASAPException, NoGroupAvailableException, IOException;
+    void addPeerToGroup(CharSequence groupId, CharSequence groupMemberId) throws ASAPException, NoGroupAvailableException, ShiverPermissionDeniedException, IOException;
 
-    void removePeerFromGroup(GroupMember groupMember) throws ASAPException, NoGroupAvailableException;
+    void removePeerFromGroup(CharSequence groupId, CharSequence groupMemberId) throws ASAPException, NoGroupAvailableException, ShiverPermissionDeniedException, IOException;
 
-    void sendGroupMessage(ASAPMessages messages) throws ASAPException, NoGroupAvailableException, IOException;
+    void deleteGroup(CharSequence groupId) throws ASAPException, NoGroupAvailableException, ShiverPermissionDeniedException, IOException;
 
-    void deleteGroup() throws ASAPException, NoGroupAvailableException;
+    void sendGroupMessage(CharSequence groupId, ASAPMessages messages) throws ASAPException, NoGroupAvailableException, IOException;
 }
