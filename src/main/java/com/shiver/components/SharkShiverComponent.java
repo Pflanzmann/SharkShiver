@@ -3,14 +3,16 @@ package com.shiver.components;
 import com.shiver.exceptions.NoGroupAvailableException;
 import com.shiver.exceptions.ShiverPermissionDeniedException;
 import com.shiver.models.Group;
+import net.sharksystem.ASAPFormats;
 import net.sharksystem.SharkComponent;
 import net.sharksystem.asap.ASAPException;
 import net.sharksystem.asap.ASAPMessages;
 
 import java.io.IOException;
 
+@ASAPFormats(formats = {SharkShiverComponent.SHARK_SHIVER_APP})
 public interface SharkShiverComponent extends SharkComponent {
-    CharSequence SHARK_SHIVER_APP = "SharkShiverApp";
+    String SHARK_SHIVER_APP = "SharkShiverApp";
 
     Group createGroup() throws ASAPException;
 

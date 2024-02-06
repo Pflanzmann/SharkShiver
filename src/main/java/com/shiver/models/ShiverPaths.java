@@ -1,8 +1,9 @@
 package com.shiver.models;
 
 public enum ShiverPaths {
-    SHIVER_GROUP_UPDATE_URI("shark/shiver/group_update"),
-    SHIVER_GROUP_DELETE_URI("shark/shiver/group_delete");
+    SHIVER_GROUP_Message("shark/shiver/group_message"),
+    SHIVER_GROUP_UPDATE("shark/shiver/group_update"),
+    SHIVER_GROUP_DELETE("shark/shiver/group_delete");
 
     private CharSequence value = null;
 
@@ -27,4 +28,4 @@ public enum ShiverPaths {
 
         return shiverPath;
     }
-}
+    }
