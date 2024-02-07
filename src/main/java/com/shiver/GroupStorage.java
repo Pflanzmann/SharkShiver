@@ -1,6 +1,6 @@
 package com.shiver;
 
-import com.shiver.exceptions.NoGroupAvailableException;
+import com.shiver.exceptions.ShiverNoGroupException;
 import com.shiver.models.Group;
 
 import java.util.List;
@@ -8,9 +8,9 @@ import java.util.List;
 public interface GroupStorage {
     void storeGroup(Group group);
 
-    Group getGroup(CharSequence groupId) throws NoGroupAvailableException;
+    Group getGroup(CharSequence groupId) throws ShiverNoGroupException;
 
-    List<Group> getAllGroups() throws NoGroupAvailableException;
+    List<Group> getAllGroups();
 
     boolean deleteGroup(CharSequence groupId);
 

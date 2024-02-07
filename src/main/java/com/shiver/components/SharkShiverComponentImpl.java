@@ -3,7 +3,8 @@ package com.shiver.components;
 import com.google.gson.Gson;
 import com.shiver.GroupStorage;
 import com.shiver.ShiverSecurity;
-import com.shiver.exceptions.NoGroupAvailableException;
+import com.shiver.exceptions.ShiverMissingCredentialsException;
+import com.shiver.exceptions.ShiverNoGroupException;
 import com.shiver.exceptions.ShiverPermissionDeniedException;
 import com.shiver.models.*;
 import net.sharksystem.SharkException;
@@ -17,12 +18,13 @@ import java.nio.charset.StandardCharsets;
 import java.util.*;
 
 public class SharkShiverComponentImpl implements SharkShiverComponent, ASAPMessageReceivedListener {
-    private ASAPPeer ownPeer = null;
-    private HashMap<CharSequence, Membership> ownedMemberships = new HashMap<>();
     private final GroupStorage groupStorage;
     private final ShiverSecurity shiverSecurity;
 
+    private ASAPPeer ownPeer = null;
+    private HashMap<CharSequence, Membership> ownedMemberships = new HashMap<>();
     private List<ShiverMessageReceiver> messageReceivers = new ArrayList<>();
+    private Set<CharSequence> lastSeenPeers = new HashSet<>();
 
     public SharkShiverComponentImpl(GroupStorage groupStorage, ShiverSecurity shiverSecurity) {
         this.groupStorage = groupStorage;
@@ -36,7 +38,7 @@ public class SharkShiverComponentImpl implements SharkShiverComponent, ASAPMessa
     }
 
     @Override
-    public Group createGroup() throws ASAPException {
+    public Group createGroup() {
         CharSequence membershipId = ownPeer.getPeerID();
         CharSequence groupId = UUID.randomUUID().toString();
 
@@ -48,7 +50,7 @@ public class SharkShiverComponentImpl implements SharkShiverComponent, ASAPMessa
     }
 
     @Override
-    public void addPeerToGroup(CharSequence groupId, CharSequence peerId) throws NoGroupAvailableException, ASAPException, ShiverPermissionDeniedException, IOException {
+    public void addPeerToGroup(CharSequence groupId, CharSequence peerId) throws ShiverNoGroupException, ASAPException, ShiverPermissionDeniedException, IOException, ShiverMissingCredentialsException {
         Group group = groupStorage.getGroup(groupId);
 
         if (!ownedMemberships.containsKey(groupId)) {
@@ -66,7 +68,7 @@ public class SharkShiverComponentImpl implements SharkShiverComponent, ASAPMessa
     }
 
     @Override
-    public void removePeerFromGroup(CharSequence groupId, CharSequence peerId) throws NoGroupAvailableException, ASAPException, ShiverPermissionDeniedException, IOException {
+    public void removePeerFromGroup(CharSequence groupId, CharSequence peerId) throws ShiverNoGroupException, ASAPException, ShiverPermissionDeniedException, IOException, ShiverMissingCredentialsException {
         Group group = groupStorage.getGroup(groupId);
 
         if (!ownedMemberships.containsKey(groupId)) {
@@ -84,7 +86,7 @@ public class SharkShiverComponentImpl implements SharkShiverComponent, ASAPMessa
     }
 
     @Override
-    public void deleteGroup(CharSequence groupId) throws ASAPException, NoGroupAvailableException, ShiverPermissionDeniedException, IOException {
+    public void deleteGroup(CharSequence groupId) throws ASAPException, ShiverNoGroupException, ShiverPermissionDeniedException, IOException, ShiverMissingCredentialsException {
         Group group = groupStorage.getGroup(groupId);
 
         if (!ownedMemberships.containsKey(groupId)) {
@@ -100,7 +102,7 @@ public class SharkShiverComponentImpl implements SharkShiverComponent, ASAPMessa
     }
 
     @Override
-    public void sendGroupMessage(CharSequence groupId, byte[] message) throws NoGroupAvailableException, ASAPException, IOException {
+    public void sendGroupMessage(CharSequence groupId, byte[] message) throws ShiverNoGroupException, ASAPException, IOException, ShiverMissingCredentialsException {
         Group group = groupStorage.getGroup(groupId);
         List<CharSequence> membershipIds = group.getMemberIdList();
 
@@ -116,7 +118,17 @@ public class SharkShiverComponentImpl implements SharkShiverComponent, ASAPMessa
         }
     }
 
-    private void publishGroupDelete(Group group, List<CharSequence> members) throws ASAPException, IOException {
+    @Override
+    public void addShiverMessageReceiver(ShiverMessageReceiver shiverMessageReceiver) {
+        this.messageReceivers.add(shiverMessageReceiver);
+    }
+
+    @Override
+    public void removeShiverMessageReceiver(ShiverMessageReceiver shiverMessageReceiver) {
+        this.messageReceivers.remove(shiverMessageReceiver);
+    }
+
+    private void publishGroupDelete(Group group, List<CharSequence> members) throws ASAPException, IOException, ShiverMissingCredentialsException {
         byte[] emptyMessageBytes = new byte[0];
 
         for (CharSequence member : members) {
@@ -145,7 +157,7 @@ public class SharkShiverComponentImpl implements SharkShiverComponent, ASAPMessa
         }
     }
 
-    private void publishGroupUpdate(Group group) throws ASAPException, IOException {
+    private void publishGroupUpdate(Group group) throws ASAPException, IOException, ShiverMissingCredentialsException {
         String serializedGroup = new Gson().toJson(group);
         byte[] groupBytes = serializedGroup.getBytes();
 
