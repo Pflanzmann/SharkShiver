@@ -100,22 +100,19 @@ public class SharkShiverComponentImpl implements SharkShiverComponent, ASAPMessa
     }
 
     @Override
-    public void sendGroupMessage(CharSequence groupId, ASAPMessages asapMessages) throws NoGroupAvailableException, ASAPException, IOException {
+    public void sendGroupMessage(CharSequence groupId, byte[] message) throws NoGroupAvailableException, ASAPException, IOException {
         Group group = groupStorage.getGroup(groupId);
         List<CharSequence> membershipIds = group.getMemberIdList();
 
         for (CharSequence membershipId : membershipIds) {
-            Iterator<byte[]> messages = asapMessages.getMessages();
-            while (messages.hasNext()) {
-                byte[] message = prepareMessage(messages.next(), ownPeer.getPeerID(), membershipId);
-                byte[] encryptedAndSignedMessage = shiverSecurity.signAndEncryptMessageContentForMemberOfGroup(membershipId, groupId, message);
+            byte[] encryptedAndSignedMessage = shiverSecurity.signAndEncryptMessageContentForMemberOfGroup(membershipId, groupId, message);
+            byte[] preparedMessage = prepareMessage(encryptedAndSignedMessage, ownPeer.getPeerID(), membershipId);
 
-                ownPeer.sendASAPMessage(
-                        SharkShiverComponent.SHARK_SHIVER_APP,
-                        ShiverPaths.SHIVER_GROUP_UPDATE.getValue(),
-                        encryptedAndSignedMessage
-                );
-            }
+            ownPeer.sendASAPMessage(
+                    SharkShiverComponent.SHARK_SHIVER_APP,
+                    ShiverPaths.SHIVER_GROUP_UPDATE.getValue(),
+                    preparedMessage
+            );
         }
     }
 

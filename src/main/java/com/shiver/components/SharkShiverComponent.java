@@ -6,7 +6,6 @@ import com.shiver.models.Group;
 import net.sharksystem.ASAPFormats;
 import net.sharksystem.SharkComponent;
 import net.sharksystem.asap.ASAPException;
-import net.sharksystem.asap.ASAPMessages;
 
 import java.io.IOException;
 
@@ -22,5 +21,5 @@ public interface SharkShiverComponent extends SharkComponent {
 
     void deleteGroup(CharSequence groupId) throws ASAPException, NoGroupAvailableException, ShiverPermissionDeniedException, IOException;
 
-    void sendGroupMessage(CharSequence groupId, ASAPMessages messages) throws ASAPException, NoGroupAvailableException, IOException;
+    void sendGroupMessage(CharSequence groupId, byte[] message) throws ASAPException, NoGroupAvailableException, IOException;
 }
