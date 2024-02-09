@@ -5,8 +5,10 @@ import com.shiver.GroupStorage;
 import com.shiver.ShiverSecurity;
 import com.shiver.exceptions.ShiverNoGroupException;
 import com.shiver.exceptions.ShiverPermissionDeniedException;
-import com.shiver.models.*;
-import net.sharksystem.SharkException;
+import com.shiver.models.Group;
+import com.shiver.models.GroupImpl;
+import com.shiver.models.MembershipImpl;
+import com.shiver.models.ShiverPaths;
 import net.sharksystem.asap.*;
 import net.sharksystem.asap.utils.ASAPSerialization;
 import net.sharksystem.utils.Log;
@@ -22,17 +24,16 @@ public class SharkShiverComponentImpl implements SharkShiverComponent, ASAPEnvir
     private final ShiverSecurity shiverSecurity;
 
     private ASAPPeer ownPeer = null;
-    private final HashMap<CharSequence, Membership> ownedMemberships = new HashMap<>();
     private final List<ShiverMessageReceiver> messageReceivers = new ArrayList<>();
     private Set<CharSequence> lastCheckedPeers = new HashSet<>();
 
-    public SharkShiverComponentImpl(GroupStorage groupStorage, ShiverSecurity shiverSecurity) {
-        this.groupStorage = groupStorage;
+    public SharkShiverComponentImpl(ShiverSecurity shiverSecurity, GroupStorage groupStorage) {
         this.shiverSecurity = shiverSecurity;
+        this.groupStorage = groupStorage;
     }
 
     @Override
-    public void onStart(ASAPPeer asapPeer) throws SharkException {
+    public void onStart(ASAPPeer asapPeer) {
         ownPeer = asapPeer;
         ownPeer.addASAPMessageReceivedListener(SHARK_SHIVER_APP, this);
     }
@@ -50,10 +51,20 @@ public class SharkShiverComponentImpl implements SharkShiverComponent, ASAPEnvir
     }
 
     @Override
+    public List<Group> getAllGroups() {
+        return new ArrayList<>(groupStorage.getAllGroups());
+    }
+
+    @Override
+    public List<CharSequence> getAllMembersOfGroup(CharSequence groupId) throws ShiverNoGroupException {
+        return groupStorage.getGroup(groupId).getMemberIdList();
+    }
+
+    @Override
     public void addPeerToGroup(CharSequence groupId, CharSequence peerId) throws ShiverNoGroupException, ASAPException, ShiverPermissionDeniedException, IOException {
         Group group = groupStorage.getGroup(groupId);
 
-        if (!ownedMemberships.containsKey(groupId)) {
+        if (!groupStorage.getAllOwnedMemberships().containsKey(groupId)) {
             throw new ShiverPermissionDeniedException();
         }
 
@@ -68,28 +79,28 @@ public class SharkShiverComponentImpl implements SharkShiverComponent, ASAPEnvir
     }
 
     @Override
-    public void removePeerFromGroup(CharSequence groupId, CharSequence peerId) throws ShiverNoGroupException, ASAPException, ShiverPermissionDeniedException, IOException {
+    public void removePeerFromGroup(CharSequence groupId, CharSequence memberId) throws ShiverNoGroupException, ASAPException, ShiverPermissionDeniedException {
         Group group = groupStorage.getGroup(groupId);
 
-        if (!ownedMemberships.containsKey(groupId)) {
+        if (!groupStorage.getAllOwnedMemberships().containsKey(groupId)) {
             throw new ShiverPermissionDeniedException();
         }
 
-        group.removeMember(peerId);
+        group.removeMember(memberId);
         groupStorage.storeGroup(group);
 
         List<CharSequence> removedMember = new ArrayList<>();
-        removedMember.add(peerId);
+        removedMember.add(memberId);
         publishGroupDelete(group, removedMember);
 
         publishGroupUpdate(group);
     }
 
     @Override
-    public void deleteGroup(CharSequence groupId) throws ASAPException, ShiverNoGroupException, ShiverPermissionDeniedException, IOException {
+    public void deleteGroup(CharSequence groupId) throws ASAPException, ShiverNoGroupException, ShiverPermissionDeniedException {
         Group group = groupStorage.getGroup(groupId);
 
-        if (!ownedMemberships.containsKey(groupId)) {
+        if (!groupStorage.getAllOwnedMemberships().containsKey(groupId)) {
             throw new ShiverPermissionDeniedException();
         }
 
@@ -101,7 +112,6 @@ public class SharkShiverComponentImpl implements SharkShiverComponent, ASAPEnvir
         publishGroupDelete(group, memberIds);
 
         groupStorage.deleteGroup(groupId);
-        ownedMemberships.remove(groupId);
         shiverSecurity.removeGroupKeys(groupId);
     }
 
@@ -111,6 +121,10 @@ public class SharkShiverComponentImpl implements SharkShiverComponent, ASAPEnvir
         List<CharSequence> membershipIds = group.getMemberIdList();
 
         for (CharSequence membershipId : membershipIds) {
+            if (membershipId != ownPeer.getPeerID()) {
+                continue;
+            }
+
             byte[] encryptedAndSignedMessage = shiverSecurity.encryptMessageContentForMemberOfGroup(membershipId, groupId, message);
             byte[] preparedMessage = prepareMessage(encryptedAndSignedMessage, ownPeer.getPeerID(), membershipId);
 
@@ -123,10 +137,10 @@ public class SharkShiverComponentImpl implements SharkShiverComponent, ASAPEnvir
     }
 
     @Override
-    public void invalidateMemberForGroup(CharSequence memberId, CharSequence groupId) throws ShiverNoGroupException, ShiverPermissionDeniedException, IOException, ASAPException {
+    public void invalidateMemberForGroup(CharSequence memberId, CharSequence groupId) throws ShiverNoGroupException, ShiverPermissionDeniedException, ASAPException {
         Group group = groupStorage.getGroup(groupId);
 
-        if (!ownedMemberships.containsKey(groupId)) {
+        if (!groupStorage.hasMembershipForGroup(groupId)) {
             throw new ShiverPermissionDeniedException();
         }
 
@@ -150,7 +164,7 @@ public class SharkShiverComponentImpl implements SharkShiverComponent, ASAPEnvir
         this.messageReceivers.remove(shiverMessageReceiver);
     }
 
-    private void publishGroupUpdate(Group group) throws ASAPException, IOException {
+    private void publishGroupUpdate(Group group) throws ASAPException {
         String serializedGroup = new Gson().toJson(group);
         byte[] groupBytes = serializedGroup.getBytes();
 
@@ -166,6 +180,8 @@ public class SharkShiverComponentImpl implements SharkShiverComponent, ASAPEnvir
             );
 
             String uriQueryParameter = "?group_id=" + group.getGroupId();
+
+
             ownPeer.sendASAPMessage(
                     SharkShiverComponent.SHARK_SHIVER_APP,
                     ShiverPaths.SHIVER_GROUP_UPDATE.getValue() + uriQueryParameter,
@@ -174,7 +190,7 @@ public class SharkShiverComponentImpl implements SharkShiverComponent, ASAPEnvir
         }
     }
 
-    private void publishGroupDelete(Group group, List<CharSequence> members) throws ASAPException, IOException {
+    private void publishGroupDelete(Group group, List<CharSequence> members) throws ASAPException {
         byte[] emptyMessageBytes = new byte[0];
 
         for (CharSequence member : members) {
@@ -197,7 +213,7 @@ public class SharkShiverComponentImpl implements SharkShiverComponent, ASAPEnvir
         }
     }
 
-    private void publishInvalidateMember(Group group, List<CharSequence> members, CharSequence memberId) throws ASAPException, IOException {
+    private void publishInvalidateMember(Group group, List<CharSequence> members, CharSequence memberId) throws ASAPException {
         byte[] emptyMessageBytes = memberId.toString().getBytes(StandardCharsets.UTF_8);
 
         for (CharSequence member : members) {
@@ -236,7 +252,7 @@ public class SharkShiverComponentImpl implements SharkShiverComponent, ASAPEnvir
         ArrayList<CharSequence> lastSeenPeersDifference = new ArrayList<>(set);
         lastSeenPeersDifference.removeAll(lastCheckedPeers);
 
-        if (lastSeenPeersDifference.stream().count() == 0) {
+        if (lastSeenPeersDifference.isEmpty()) {
             return;
         }
 
@@ -313,7 +329,6 @@ public class SharkShiverComponentImpl implements SharkShiverComponent, ASAPEnvir
                 String groupId = messageUri.getQuery().replace("group_id=", "");
 
                 groupStorage.deleteGroup(groupId);
-                ownedMemberships.remove(groupId);
                 shiverSecurity.removeGroupKeys(groupId);
             }
 
@@ -341,4 +356,3 @@ public class SharkShiverComponentImpl implements SharkShiverComponent, ASAPEnvir
         }
     }
 }
-

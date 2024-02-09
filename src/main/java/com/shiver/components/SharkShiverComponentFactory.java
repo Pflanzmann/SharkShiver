@@ -1,7 +1,7 @@
 package com.shiver.components;
 
-import com.shiver.ShiverSecurity;
 import com.shiver.GroupStorage;
+import com.shiver.ShiverSecurity;
 import net.sharksystem.SharkComponent;
 import net.sharksystem.SharkComponentFactory;
 
@@ -10,15 +10,15 @@ public class SharkShiverComponentFactory implements SharkComponentFactory {
     private ShiverSecurity shiverSecurity = null;
     private SharkShiverComponentImpl instance = null;
 
-    public SharkShiverComponentFactory(GroupStorage groupStorage, ShiverSecurity shiverSecurity) {
-        this.groupStorage = groupStorage;
+    public SharkShiverComponentFactory(ShiverSecurity shiverSecurity, GroupStorage groupStorage) {
         this.shiverSecurity = shiverSecurity;
+        this.groupStorage = groupStorage;
     }
 
     @Override
     public SharkComponent getComponent() {
         if (instance == null) {
-            return new SharkShiverComponentImpl(groupStorage, shiverSecurity);
+            return new SharkShiverComponentImpl(shiverSecurity, groupStorage);
         } else {
             return instance;
         }

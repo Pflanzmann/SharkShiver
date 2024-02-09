@@ -5,6 +5,11 @@ import net.sharksystem.asap.ASAPSecurityException;
 
 import java.io.IOException;
 
+/**
+ * This interface represents the security aspect of the SharkShiver library and is mainly used by SharkShiverComponentImpl.
+ * This enables an easy way to let the developer decide to implement their own logic to handle secrets and decrypt/ encrypt messages.
+ * It is mainly used for the ASAP framework, hence the use of ASAP exceptions.
+ */
 public interface ShiverSecurity {
 
     /**
@@ -13,7 +18,7 @@ public interface ShiverSecurity {
      * @param groupId  - the id the member is associated with
      * @param memberId - the id of the member
      * @return - true if a secret exchange is necessary
-     * @throws ASAPException - throws when something went wrong in the underlying ASAP structure
+     * @throws ASAPSecurityException - throws when something went wrong in the underlying ASAP structure
      */
     boolean isSecretExchangeNeeded(CharSequence groupId, CharSequence memberId) throws ASAPSecurityException;
 
@@ -35,7 +40,7 @@ public interface ShiverSecurity {
      * @param memberId - the id of the member
      * @param message  - The data that should get encrypted
      * @return - the done encrypted message
-     * @throws ASAPException                     - throws when something went wrong in the underlying ASAP structure
+     * @throws ASAPSecurityException - throws when something went wrong in the underlying ASAP structure
      */
     byte[] encryptMessageContentForMemberOfGroup(CharSequence memberId, CharSequence groupId, byte[] message) throws ASAPSecurityException;
 
@@ -46,8 +51,8 @@ public interface ShiverSecurity {
      * @param groupId  - the id the sender is associated with
      * @param message  - The encrypted message
      * @return - the raw message that should get delivered
-     * @throws ASAPException                     - throws when something went wrong in the underlying ASAP structure
-     * @throws ASAPException                     - throws when something went wrong in the underlying ASAP structure
+     * @throws ASAPException - throws when something went wrong in the underlying ASAP structure
+     * @throws IOException   - throws when something went wrong in the underlying ASAP structure
      */
     byte[] decryptMessageFromGroup(CharSequence senderId, CharSequence groupId, byte[] message) throws ASAPException, IOException;
 
@@ -55,7 +60,7 @@ public interface ShiverSecurity {
      * Invalidates all keys of a user when his keys got compromised.
      *
      * @param memberId - the id of the member that the invalidation is associated with
-     * @param groupId - the id of the group that the invalidation is associated with
+     * @param groupId  - the id of the group that the invalidation is associated with
      */
     void invalidateSecretsOfMemberInGroup(CharSequence memberId, CharSequence groupId);
 

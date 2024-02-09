@@ -61,7 +61,7 @@ public class SharkPkiSecurity implements ShiverSecurity, SharkCredentialReceived
     }
 
     @Override
-    public void sendSecretToMemberOfGroup(CharSequence groupId, CharSequence memberId) throws ASAPException, IOException {
+    public void sendSecretToMemberOfGroup(CharSequence groupId, CharSequence memberId) throws IOException, ASAPException {
         CharSequence membershipId = combineMemberAndGroupId(memberId, groupId);
         CredentialMessageInMemo credentialMessage = new CredentialMessageInMemo(membershipId, sharkPKIComponent.getOwnerName(), sharkPKIComponent.getKeysCreationTime(), sharkPKIComponent.getPublicKey());
 
