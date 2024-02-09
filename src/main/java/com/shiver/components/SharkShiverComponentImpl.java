@@ -1,18 +1,15 @@
 package com.shiver.components;
 
-import com.google.gson.Gson;
+import com.shiver.ShiverGroupFactory;
 import com.shiver.ShiverGroupStorage;
 import com.shiver.ShiverSecurity;
 import com.shiver.exceptions.ShiverNoGroupException;
 import com.shiver.exceptions.ShiverPermissionDeniedException;
 import com.shiver.models.ShiverGroup;
-import com.shiver.models.ShiverGroupImpl;
 import com.shiver.models.ShiverPaths;
 import net.sharksystem.asap.*;
-import net.sharksystem.asap.utils.ASAPSerialization;
 import net.sharksystem.utils.Log;
 
-import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.net.URI;
 import java.nio.charset.StandardCharsets;
@@ -21,18 +18,22 @@ import java.util.*;
 /**
  * This class is the main implementation of the [SharkShiverComponent] interface.
  * This class does not need to get stored or loaded because of the [GroupStorage] and [ShiverSecurity] interfaces that handle all data
+ * This component implements a single point of truth concept for the group. Only the admin is able to alter the group and
+ * members are only able to send messages and exchange certificates.
  */
 class SharkShiverComponentImpl implements SharkShiverComponent, ASAPEnvironmentChangesListener, ASAPMessageReceivedListener {
     private final ShiverGroupStorage groupStorage;
     private final ShiverSecurity shiverSecurity;
+    private final ShiverGroupFactory groupFactory;
 
     private ASAPPeer ownPeer = null;
     private final List<ShiverMessageReceiver> messageReceivers = new ArrayList<>();
     private Set<CharSequence> lastCheckedPeers = new HashSet<>();
 
-    public SharkShiverComponentImpl(ShiverSecurity shiverSecurity, ShiverGroupStorage groupStorage) {
+    public SharkShiverComponentImpl(ShiverSecurity shiverSecurity, ShiverGroupStorage groupStorage, ShiverGroupFactory groupFactory) {
         this.shiverSecurity = shiverSecurity;
         this.groupStorage = groupStorage;
+        this.groupFactory = groupFactory;
     }
 
     @Override
@@ -44,8 +45,9 @@ class SharkShiverComponentImpl implements SharkShiverComponent, ASAPEnvironmentC
     @Override
     public ShiverGroup createGroup() {
         CharSequence groupId = UUID.randomUUID().toString();
-
-        return groupStorage.createNewGroup(groupId, ownPeer.getPeerID());
+        ShiverGroup group = groupFactory.createNewGroup(groupId, ownPeer.getPeerID());
+        groupStorage.storeGroup(group);
+        return group;
     }
 
     @Override
@@ -73,11 +75,11 @@ class SharkShiverComponentImpl implements SharkShiverComponent, ASAPEnvironmentC
         group.addMember(peerId);
         groupStorage.storeGroup(group);
 
-        publishGroupUpdate(group);
+        publishGroupUpdate(group, false);
     }
 
     @Override
-    public void removePeerFromGroup(CharSequence groupId, CharSequence memberId) throws ShiverNoGroupException, ASAPException, ShiverPermissionDeniedException {
+    public void removePeerFromGroup(CharSequence groupId, CharSequence memberId) throws ShiverNoGroupException, ASAPException, ShiverPermissionDeniedException, IOException {
         ShiverGroup group = groupStorage.getGroup(groupId);
 
         if (!groupStorage.isAdminOfGroup(groupId, ownPeer.getPeerID())) {
@@ -96,7 +98,7 @@ class SharkShiverComponentImpl implements SharkShiverComponent, ASAPEnvironmentC
         removedMember.add(memberId);
         publishGroupDelete(group, removedMember);
 
-        publishGroupUpdate(group);
+        publishGroupUpdate(group, false);
     }
 
     @Override
@@ -128,13 +130,12 @@ class SharkShiverComponentImpl implements SharkShiverComponent, ASAPEnvironmentC
                 continue;
             }
 
-            byte[] encryptedAndSignedMessage = shiverSecurity.encryptMessageContentForMemberOfGroup(membershipId, groupId, message);
-            byte[] preparedMessage = prepareMessage(encryptedAndSignedMessage, ownPeer.getPeerID(), membershipId);
+            byte[] encryptedMessage = shiverSecurity.encryptMessageContentForMemberOfGroup(membershipId, groupId, message);
 
             ownPeer.sendASAPMessage(
                     SharkShiverComponent.SHARK_SHIVER_APP,
                     ShiverPaths.SHIVER_GROUP_UPDATE.getValue(),
-                    preparedMessage
+                    encryptedMessage
             );
         }
     }
@@ -158,9 +159,15 @@ class SharkShiverComponentImpl implements SharkShiverComponent, ASAPEnvironmentC
     }
 
     @Override
-    public void publishGroupUpdate(CharSequence groupId) throws ASAPException, ShiverNoGroupException {
+    public void publishGroupUpdate(CharSequence groupId) throws ASAPException, ShiverNoGroupException, IOException {
         ShiverGroup group = groupStorage.getGroup(groupId);
-        publishGroupUpdate(group);
+        publishGroupUpdate(group, false);
+    }
+
+    @Override
+    public void publishOnlineOnlyGroupUpdate(CharSequence groupId) throws ASAPException, ShiverNoGroupException, IOException {
+        ShiverGroup group = groupStorage.getGroup(groupId);
+        publishGroupUpdate(group, true);
     }
 
     @Override
@@ -173,28 +180,34 @@ class SharkShiverComponentImpl implements SharkShiverComponent, ASAPEnvironmentC
         this.messageReceivers.remove(shiverMessageReceiver);
     }
 
-    private void publishGroupUpdate(ShiverGroup group) throws ASAPException {
+    private void publishGroupUpdate(ShiverGroup group, boolean onlineOnly) throws ASAPException, IOException {
         byte[] groupBytes = group.serialize();
 
         for (CharSequence member : group.getMemberIdList()) {
-            if (member == group.getAdminId()) {
+            if (member == ownPeer.getPeerID()) {
                 continue;
             }
 
             byte[] encryptedBytes = shiverSecurity.encryptMessageContentForMemberOfGroup(
-                    group.getAdminId(),
+                    member,
                     group.getGroupId(),
                     groupBytes
             );
 
             String uriQueryParameter = "?group_id=" + group.getGroupId();
-
-
-            ownPeer.sendASAPMessage(
-                    SharkShiverComponent.SHARK_SHIVER_APP,
-                    ShiverPaths.SHIVER_GROUP_UPDATE.getValue() + uriQueryParameter,
-                    encryptedBytes
-            );
+            if (onlineOnly) {
+                ownPeer.sendTransientASAPMessage(
+                        SharkShiverComponent.SHARK_SHIVER_APP,
+                        ShiverPaths.SHIVER_GROUP_UPDATE.getValue() + uriQueryParameter,
+                        encryptedBytes
+                );
+            } else {
+                ownPeer.sendASAPMessage(
+                        SharkShiverComponent.SHARK_SHIVER_APP,
+                        ShiverPaths.SHIVER_GROUP_UPDATE.getValue() + uriQueryParameter,
+                        encryptedBytes
+                );
+            }
         }
     }
 
@@ -202,12 +215,12 @@ class SharkShiverComponentImpl implements SharkShiverComponent, ASAPEnvironmentC
         byte[] emptyMessageBytes = new byte[0];
 
         for (CharSequence member : members) {
-            if (member == group.getAdminId()) {
+            if (member == ownPeer.getPeerID()) {
                 continue;
             }
 
             byte[] encryptedBytes = shiverSecurity.encryptMessageContentForMemberOfGroup(
-                    group.getAdminId(),
+                    member,
                     group.getGroupId(),
                     emptyMessageBytes
             );
@@ -225,12 +238,12 @@ class SharkShiverComponentImpl implements SharkShiverComponent, ASAPEnvironmentC
         byte[] emptyMessageBytes = memberId.toString().getBytes(StandardCharsets.UTF_8);
 
         for (CharSequence member : members) {
-            if (member == group.getAdminId()) {
+            if (member == ownPeer.getPeerID()) {
                 continue;
             }
 
             byte[] encryptedBytes = shiverSecurity.encryptMessageContentForMemberOfGroup(
-                    group.getAdminId(),
+                    member,
                     group.getGroupId(),
                     emptyMessageBytes
             );
@@ -242,17 +255,6 @@ class SharkShiverComponentImpl implements SharkShiverComponent, ASAPEnvironmentC
                     encryptedBytes
             );
         }
-    }
-
-    private byte[] prepareMessage(byte[] message, CharSequence sender, CharSequence receiver) throws IOException {
-        ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
-
-        ASAPSerialization.writeByteArray(message, outputStream);
-        ASAPSerialization.writeCharSequenceParameter(sender, outputStream);
-        ASAPSerialization.writeCharSequenceParameter(receiver, outputStream);
-        ASAPSerialization.writeLongParameter(System.currentTimeMillis(), outputStream);
-
-        return outputStream.toByteArray();
     }
 
     @Override
@@ -271,7 +273,6 @@ class SharkShiverComponentImpl implements SharkShiverComponent, ASAPEnvironmentC
                     if (group.getMemberIdList().contains(peerId) && shiverSecurity.isSecretExchangeNeeded(group.getGroupId(), peerId)) {
                         shiverSecurity.sendSecretToMemberOfGroup(group.getGroupId(), peerId);
                     }
-
                 } catch (ASAPException | IOException e) {
                     Log.writeLog(this, "Something went wrong when sending the message");
                 }
@@ -290,6 +291,22 @@ class SharkShiverComponentImpl implements SharkShiverComponent, ASAPEnvironmentC
             case SHIVER_GROUP_Message -> {
                 String groupId = messageUri.getQuery().replace("group_id=", "");
 
+                if (!groupStorage.hasGroupWithId(groupId)) {
+                    Log.writeLog(this, "Does not know the group");
+                    return;
+                }
+
+                try {
+                    ShiverGroup group = groupStorage.getGroup(groupId);
+                    if (!group.getMemberIdList().contains(ownPeer.getPeerID())) {
+                        Log.writeLog(this, "Is not part of this group");
+                        return;
+                    }
+                } catch (ShiverNoGroupException e) {
+                    Log.writeLog(this, "Error fetching group");
+                    return;
+                }
+
                 Iterator<byte[]> messages = asapMessages.getMessages();
                 while (messages.hasNext()) {
                     byte[] message = messages.next();
@@ -305,6 +322,9 @@ class SharkShiverComponentImpl implements SharkShiverComponent, ASAPEnvironmentC
                             messageReceiver.receiveShiverMessage(groupId, plainMessageBytes);
                         }
                     } catch (Exception e) {
+                        for (ShiverMessageReceiver messageReceiver : messageReceivers) {
+                            messageReceiver.errorReceivingMessage(groupId, message, e);
+                        }
                         Log.writeLog(this, "Could not decrypt message of member ");
                     }
                 }
@@ -324,7 +344,7 @@ class SharkShiverComponentImpl implements SharkShiverComponent, ASAPEnvironmentC
                                 message
                         );
 
-                        ShiverGroup groupUpdate = groupStorage.parseGroupFromBytes(plainMessageBytes);
+                        ShiverGroup groupUpdate = groupFactory.parseGroupFromBytes(plainMessageBytes);
 
                         try {
                             ShiverGroup group = groupStorage.getGroup(groupId);
@@ -333,7 +353,7 @@ class SharkShiverComponentImpl implements SharkShiverComponent, ASAPEnvironmentC
                                 groupStorage.storeGroup(groupUpdate);
                             }
                             return;
-                        } catch (ShiverNoGroupException e) {
+                        } catch (Exception e) {
                             Log.writeLog(this, "No group in store");
                         }
 
@@ -346,6 +366,24 @@ class SharkShiverComponentImpl implements SharkShiverComponent, ASAPEnvironmentC
 
             case SHIVER_GROUP_DELETE -> {
                 String groupId = messageUri.getQuery().replace("group_id=", "");
+
+                Iterator<byte[]> messages = asapMessages.getMessages();
+                while (messages.hasNext()) {
+                    byte[] message = messages.next();
+
+                    try {
+                        byte[] plainMessageBytes = shiverSecurity.decryptMessageFromGroup(
+                                ownPeer.getPeerID(),
+                                groupId,
+                                message
+                        );
+
+                        CharSequence memberId = new String(plainMessageBytes, StandardCharsets.UTF_8);
+                        shiverSecurity.invalidateSecretsOfMemberInGroup(memberId, groupId);
+                    } catch (Exception e) {
+                        Log.writeLog(this, "Could not decrypt, verify or invalidate member");
+                    }
+                }
 
                 groupStorage.deleteGroup(groupId);
                 shiverSecurity.removeGroupKeys(groupId);
