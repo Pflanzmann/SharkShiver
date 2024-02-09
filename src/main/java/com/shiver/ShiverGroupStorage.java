@@ -22,9 +22,8 @@ public interface ShiverGroupStorage {
      *
      * @param groupId - group to retrieve
      * @return - a group object associated with the group id
-     * @throws ShiverNoGroupException - throws if there is no group associated with the id
      */
-    ShiverGroup getGroup(CharSequence groupId) throws ShiverNoGroupException;
+    ShiverGroup getGroup(CharSequence groupId);
 
     /**
      * @return - All groups that are stored
