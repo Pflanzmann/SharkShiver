@@ -21,7 +21,7 @@ public interface ShiverSecurity {
      * @throws ASAPSecurityException - throws when something went wrong in the underlying ASAP structure
      */
     boolean isSecretExchangeNeeded(CharSequence groupId, CharSequence memberId) throws ASAPSecurityException;
-
+    
     /**
      * Sends a secret to the member and associates it with the group.
      * This should be called if isSecretExchangeNeeded(...) is returning true

@@ -2,7 +2,7 @@ package com.shiver.components;
 
 import com.shiver.exceptions.ShiverNoGroupException;
 import com.shiver.exceptions.ShiverPermissionDeniedException;
-import com.shiver.models.Group;
+import com.shiver.models.ShiverGroup;
 import net.sharksystem.ASAPFormats;
 import net.sharksystem.SharkComponent;
 import net.sharksystem.asap.ASAPException;
@@ -19,19 +19,18 @@ public interface SharkShiverComponent extends SharkComponent {
     String SHARK_SHIVER_APP = "SharkShiverApp";
 
     /**
-     * Creates a group as the admin and joins it
+     * Joins the group object and stores it
      *
-     * @return - The group object of the newly created group
      * @throws ASAPException - throws when something went wrong in the underlying ASAP structure
      */
-    Group createGroup() throws ASAPException;
+    ShiverGroup createGroup() throws ASAPException;
 
     /**
      * returns all groups that are handled by the associated group storage
      *
      * @return - A list containing all groups known to the component
      */
-    List<Group> getAllGroups();
+    List<ShiverGroup> getAllGroups();
 
     /**
      * Returns the Ids of all peers associated with the group
@@ -103,6 +102,15 @@ public interface SharkShiverComponent extends SharkComponent {
      * @throws ASAPException                   - throws when something went wrong in the underlying ASAP structure
      */
     void invalidateMemberForGroup(CharSequence memberId, CharSequence groupId) throws ShiverNoGroupException, ShiverPermissionDeniedException, IOException, ASAPException;
+
+    /**
+     * Publishes a group update if the user wants update the group manually
+     *
+     * @param groupId - id of the group to publish
+     * @throws ASAPException          - throws when something went wrong in the underlying ASAP structure
+     * @throws ShiverNoGroupException - throws when there is no group associated with the id
+     */
+    void publishGroupUpdate(CharSequence groupId) throws ASAPException, ShiverNoGroupException;
 
     /**
      * Adds a receiver for messages that got send with the sendGroupMessage(...) function

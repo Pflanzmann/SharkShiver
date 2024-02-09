@@ -1,6 +1,6 @@
 package com.shiver;
 
-import com.shiver.models.Group;
+import com.shiver.models.ShiverGroup;
 import net.sharksystem.asap.ASAPException;
 import net.sharksystem.asap.ASAPSecurityException;
 import net.sharksystem.asap.crypto.ASAPCryptoAlgorithms;
@@ -13,11 +13,15 @@ import net.sharksystem.utils.Log;
 import java.io.IOException;
 import java.util.List;
 
+/**
+ * This class is the main implementation of the [ShiverSecurity] interface.
+ * This class has no need to be loaded or stored because all data is handled by the [SharkPKIComponent] and [GroupStorage]
+ */
 public class SharkPkiSecurity implements ShiverSecurity, SharkCredentialReceivedListener {
     private final SharkPKIComponent sharkPKIComponent;
-    private final GroupStorage groupStorage;
+    private final ShiverGroupStorage groupStorage;
 
-    public SharkPkiSecurity(SharkPKIComponent sharkPKIComponent, GroupStorage groupStorage) {
+    public SharkPkiSecurity(SharkPKIComponent sharkPKIComponent, ShiverGroupStorage groupStorage) {
         this.sharkPKIComponent = sharkPKIComponent;
         this.groupStorage = groupStorage;
 
@@ -30,28 +34,13 @@ public class SharkPkiSecurity implements ShiverSecurity, SharkCredentialReceived
         CharSequence memberId = extractMemberIdFromCombinedId(subjectId);
         CharSequence groupId = extractMemberIdFromCombinedId(subjectId);
 
-        List<Group> groups = groupStorage.getAllGroups();
+        List<ShiverGroup> groups = groupStorage.getAllGroups();
 
-        //Check all every group
-        for (Group group : groups) {
-            if (group.getGroupId() == groupId) {
-
-                //Check every member of group
-                for (CharSequence groupMemberId : group.getMemberIdList()) {
-                    if (groupMemberId == memberId) {
-                        try {
-                            sharkPKIComponent.acceptAndSignCredential(credentialMessage);
-                        } catch (IOException | ASAPSecurityException e) {
-                            Log.writeLog(this, "Something went wrong when accepting message");
-                        }
-                    }
-                }
-
-                Log.writeLog(this, "No member associated with the member and group of the CredentialMessage");
-            }
+        try {
+            sharkPKIComponent.acceptAndSignCredential(credentialMessage);
+        } catch (IOException | ASAPSecurityException e) {
+            Log.writeLog(this, "Something went wrong when accepting message");
         }
-
-        Log.writeLog(this, "No group associated with the group of the CredentialMessage");
     }
 
     @Override
@@ -76,7 +65,7 @@ public class SharkPkiSecurity implements ShiverSecurity, SharkCredentialReceived
     }
 
     @Override
-    public byte[] decryptMessageFromGroup(CharSequence senderId, CharSequence groupId, byte[] message) throws ASAPException, IOException {
+    public byte[] decryptMessageFromGroup(CharSequence senderId, CharSequence groupId, byte[] message) throws IOException, ASAPException {
         ASAPCryptoAlgorithms.EncryptedMessagePackage encryptedMessagePackage = ASAPCryptoAlgorithms.parseEncryptedMessagePackage(message);
 
         return ASAPCryptoAlgorithms.decryptPackage(encryptedMessagePackage, sharkPKIComponent);

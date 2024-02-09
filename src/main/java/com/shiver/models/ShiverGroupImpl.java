@@ -1,20 +1,22 @@
 package com.shiver.models;
 
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.List;
-import java.util.UUID;
+import com.google.gson.Gson;
 
-public class GroupImpl implements Group {
+import java.util.ArrayList;
+import java.util.List;
+
+/**
+ * A simple implementation for the [ShiverGroup] interface
+ * To serialize and deserialize we use the GSON library
+ */
+public class ShiverGroupImpl implements ShiverGroup {
     private final CharSequence groupId;
     private final CharSequence adminId;
     private final List<CharSequence> memberIds;
     private int groupIteration = 0;
-    private final Date creationDate;
 
-    public GroupImpl(CharSequence adminId, CharSequence groupId, Date creationDate) {
+    public ShiverGroupImpl(CharSequence adminId, CharSequence groupId) {
         this.adminId = adminId;
-        this.creationDate = creationDate;
 
         this.groupId = groupId;
 
@@ -59,7 +61,11 @@ public class GroupImpl implements Group {
     }
 
     @Override
-    public Date getCreationDate() {
-        return new Date(creationDate.getTime());
+    public byte[] serialize() {
+        return new Gson().toJson(this, ShiverGroupImpl.class).getBytes();
+    }
+
+    public static ShiverGroup deserialize(byte[] data) {
+        return new Gson().fromJson(new String(data), ShiverGroupImpl.class);
     }
 }
