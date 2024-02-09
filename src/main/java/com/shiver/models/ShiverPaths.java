@@ -18,7 +18,6 @@ public enum ShiverPaths {
     public static ShiverPaths parsePathByValue(CharSequence charSequence) {
         ShiverPaths shiverPath = null;
 
-        // Find the corresponding enum for the string value
         for (ShiverPaths sp : ShiverPaths.values()) {
             if (sp.getValue().equals(charSequence)) {
                 shiverPath = sp;

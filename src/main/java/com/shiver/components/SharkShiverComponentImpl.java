@@ -17,14 +17,14 @@ import java.net.URI;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
 
-public class SharkShiverComponentImpl implements SharkShiverComponent, ASAPMessageReceivedListener {
+public class SharkShiverComponentImpl implements SharkShiverComponent, ASAPMessageReceivedListener, ASAPEnvironmentChangesListener {
     private final GroupStorage groupStorage;
     private final ShiverSecurity shiverSecurity;
 
     private ASAPPeer ownPeer = null;
-    private HashMap<CharSequence, Membership> ownedMemberships = new HashMap<>();
-    private List<ShiverMessageReceiver> messageReceivers = new ArrayList<>();
-    private Set<CharSequence> lastSeenPeers = new HashSet<>();
+    private final HashMap<CharSequence, Membership> ownedMemberships = new HashMap<>();
+    private final List<ShiverMessageReceiver> messageReceivers = new ArrayList<>();
+    private final Set<CharSequence> lastSeenPeers = new HashSet<>();
 
     public SharkShiverComponentImpl(GroupStorage groupStorage, ShiverSecurity shiverSecurity) {
         this.groupStorage = groupStorage;
@@ -59,7 +59,7 @@ public class SharkShiverComponentImpl implements SharkShiverComponent, ASAPMessa
 
         group.addMember(peerId);
 
-        shiverSecurity.exchangeSecretWithMemberOfGroup(group, peerId);
+        shiverSecurity.sendSecretToMemberOfGroup(groupId, peerId);
 
         group.addMember(peerId);
         groupStorage.storeGroup(group);
@@ -107,7 +107,7 @@ public class SharkShiverComponentImpl implements SharkShiverComponent, ASAPMessa
         List<CharSequence> membershipIds = group.getMemberIdList();
 
         for (CharSequence membershipId : membershipIds) {
-            byte[] encryptedAndSignedMessage = shiverSecurity.signAndEncryptMessageContentForMemberOfGroup(membershipId, groupId, message);
+            byte[] encryptedAndSignedMessage = shiverSecurity.encryptMessageContentForMemberOfGroup(membershipId, groupId, message);
             byte[] preparedMessage = prepareMessage(encryptedAndSignedMessage, ownPeer.getPeerID(), membershipId);
 
             ownPeer.sendASAPMessage(
@@ -136,7 +136,7 @@ public class SharkShiverComponentImpl implements SharkShiverComponent, ASAPMessa
                 continue;
             }
 
-            byte[] encryptedBytes = shiverSecurity.signAndEncryptMessageContentForMemberOfGroup(
+            byte[] encryptedBytes = shiverSecurity.encryptMessageContentForMemberOfGroup(
                     group.getAdminId(),
                     group.getGroupId(),
                     emptyMessageBytes
@@ -166,7 +166,7 @@ public class SharkShiverComponentImpl implements SharkShiverComponent, ASAPMessa
                 continue;
             }
 
-            byte[] encryptedBytes = shiverSecurity.signAndEncryptMessageContentForMemberOfGroup(
+            byte[] encryptedBytes = shiverSecurity.encryptMessageContentForMemberOfGroup(
                     group.getAdminId(),
                     group.getGroupId(),
                     groupBytes
@@ -212,7 +212,7 @@ public class SharkShiverComponentImpl implements SharkShiverComponent, ASAPMessa
                     byte[] message = messages.next();
 
                     try {
-                        byte[] plainMessageBytes = shiverSecurity.decryptAndVerifyMessageFromGroup(
+                        byte[] plainMessageBytes = shiverSecurity.decryptMessageFromGroup(
                                 ownPeer.getPeerID(),
                                 groupId,
                                 message
@@ -235,7 +235,7 @@ public class SharkShiverComponentImpl implements SharkShiverComponent, ASAPMessa
                     byte[] message = messages.next();
 
                     try {
-                        byte[] plainMessageBytes = shiverSecurity.decryptAndVerifyMessageFromGroup(
+                        byte[] plainMessageBytes = shiverSecurity.decryptMessageFromGroup(
                                 ownPeer.getPeerID(),
                                 groupId,
                                 message
@@ -258,6 +258,11 @@ public class SharkShiverComponentImpl implements SharkShiverComponent, ASAPMessa
                 shiverSecurity.removeGroupKeys(groupId);
             }
         }
+    }
+
+    @Override
+    public void onlinePeersChanged(Set<CharSequence> set) {
+
     }
 }
 

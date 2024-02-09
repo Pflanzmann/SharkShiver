@@ -1,16 +1,20 @@
 package com.shiver;
 
 import com.shiver.exceptions.ShiverMissingCredentialsException;
-import com.shiver.models.Group;
+import net.sharksystem.asap.ASAPException;
 import net.sharksystem.asap.ASAPSecurityException;
+
+import java.io.IOException;
 
 public interface ShiverSecurity {
 
-    void exchangeSecretWithMemberOfGroup(Group group, CharSequence membershipId) throws ASAPSecurityException;
+    boolean isSecretExchangeNeeded(CharSequence groupId, CharSequence peerId) throws ASAPSecurityException;
 
-    byte[] signAndEncryptMessageContentForMemberOfGroup(CharSequence membershipId, CharSequence groupId, byte[] message) throws ASAPSecurityException, ShiverMissingCredentialsException;
+    void sendSecretToMemberOfGroup(CharSequence groupId, CharSequence memberId) throws ASAPException, IOException;
 
-    byte[] decryptAndVerifyMessageFromGroup(CharSequence membershipId, CharSequence groupId, byte[] message) throws ASAPSecurityException, ShiverMissingCredentialsException;
+    byte[] encryptMessageContentForMemberOfGroup(CharSequence memberId, CharSequence groupId, byte[] message) throws ASAPSecurityException, ShiverMissingCredentialsException;
 
-    boolean removeGroupKeys(String groupId);
+    byte[] decryptMessageFromGroup(CharSequence memberId, CharSequence groupId, byte[] message) throws ASAPException, ShiverMissingCredentialsException, IOException;
+
+    void removeGroupKeys(String groupId);
 }
