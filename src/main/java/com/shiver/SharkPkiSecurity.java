@@ -20,6 +20,8 @@ public class SharkPkiSecurity implements ShiverSecurity, SharkCredentialReceived
     public SharkPkiSecurity(SharkPKIComponent sharkPKIComponent, GroupStorage groupStorage) {
         this.sharkPKIComponent = sharkPKIComponent;
         this.groupStorage = groupStorage;
+
+        sharkPKIComponent.setSharkCredentialReceivedListener(this);
     }
 
     @Override
@@ -29,8 +31,12 @@ public class SharkPkiSecurity implements ShiverSecurity, SharkCredentialReceived
         CharSequence groupId = extractMemberIdFromCombinedId(subjectId);
 
         List<Group> groups = groupStorage.getAllGroups();
+
+        //Check all every group
         for (Group group : groups) {
             if (group.getGroupId() == groupId) {
+
+                //Check every member of group
                 for (CharSequence groupMemberId : group.getMemberIdList()) {
                     if (groupMemberId == memberId) {
                         try {
@@ -41,7 +47,7 @@ public class SharkPkiSecurity implements ShiverSecurity, SharkCredentialReceived
                     }
                 }
 
-                Log.writeLog(this, "No member associated with the member of the CredentialMessage");
+                Log.writeLog(this, "No member associated with the member and group of the CredentialMessage");
             }
         }
 
@@ -56,8 +62,8 @@ public class SharkPkiSecurity implements ShiverSecurity, SharkCredentialReceived
 
     @Override
     public void sendSecretToMemberOfGroup(CharSequence groupId, CharSequence memberId) throws ASAPException, IOException {
-        CharSequence membership = combineMemberAndGroupId(memberId, groupId);
-        CredentialMessageInMemo credentialMessage = new CredentialMessageInMemo(membership, sharkPKIComponent.getOwnerName(), sharkPKIComponent.getKeysCreationTime(), sharkPKIComponent.getPublicKey());
+        CharSequence membershipId = combineMemberAndGroupId(memberId, groupId);
+        CredentialMessageInMemo credentialMessage = new CredentialMessageInMemo(membershipId, sharkPKIComponent.getOwnerName(), sharkPKIComponent.getKeysCreationTime(), sharkPKIComponent.getPublicKey());
 
         sharkPKIComponent.sendOnlineCredentialMessage(credentialMessage);
     }
@@ -70,15 +76,20 @@ public class SharkPkiSecurity implements ShiverSecurity, SharkCredentialReceived
     }
 
     @Override
-    public byte[] decryptMessageFromGroup(CharSequence memberId, CharSequence groupId, byte[] message) throws ASAPException, IOException {
+    public byte[] decryptMessageFromGroup(CharSequence senderId, CharSequence groupId, byte[] message) throws ASAPException, IOException {
         ASAPCryptoAlgorithms.EncryptedMessagePackage encryptedMessagePackage = ASAPCryptoAlgorithms.parseEncryptedMessagePackage(message);
 
         return ASAPCryptoAlgorithms.decryptPackage(encryptedMessagePackage, sharkPKIComponent);
     }
 
     @Override
-    public void removeGroupKeys(String groupId) {
-        // sharkPki cant do that shit yet
+    public void invalidateSecretsOfMemberInGroup(CharSequence memberId, CharSequence groupId) {
+        // SharkPKI can not do that yet
+    }
+
+    @Override
+    public void removeGroupKeys(CharSequence groupId) {
+        // SharkPKI can not do that yet
     }
 
     private CharSequence combineMemberAndGroupId(CharSequence memberId, CharSequence groupId) {
