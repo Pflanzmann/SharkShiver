@@ -13,7 +13,7 @@ public class ShiverGroupImpl implements ShiverGroup {
     private final CharSequence groupId;
     private final CharSequence adminId;
     private final List<CharSequence> memberIds;
-    private int groupIteration = 0;
+    private long groupIteration = 0;
 
     public ShiverGroupImpl(CharSequence adminId, CharSequence groupId) {
         this.adminId = adminId;
@@ -56,7 +56,7 @@ public class ShiverGroupImpl implements ShiverGroup {
     }
 
     @Override
-    public int getGroupIteration() {
+    public long getGroupIteration() {
         return groupIteration;
     }
 

@@ -40,12 +40,13 @@ public interface ShiverGroup {
     boolean removeMember(CharSequence groupMember);
 
     /**
-     * A group iteration should get increased every time the group gets changed
-     * This helps to know what groupUpdate is the newest
+     * A group iteration should get updated every time the group gets changed
+     * This helps to know what groupUpdate is the newest.
+     * This could be a long that counts up or a date for the last update
      *
      * @return - integer representing the version
      */
-    int getGroupIteration();
+    long getGroupIteration();
 
     /**
      * A method to serialize the group object to be able to serialize it without an actual implementation
