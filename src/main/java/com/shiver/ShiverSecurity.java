@@ -21,7 +21,15 @@ public interface ShiverSecurity {
      * @throws ASAPSecurityException - throws when something went wrong in the underlying ASAP structure
      */
     boolean isSecretExchangeNeeded(CharSequence groupId, CharSequence memberId) throws ASAPSecurityException;
-    
+
+    /**
+     * Accepts the group invite of of the group with the associated id from the associated member
+     * @param groupId
+     * @param memberId
+     * @return
+     */
+    void acceptGroupInvite(CharSequence groupId, CharSequence memberId);
+
     /**
      * Sends a secret to the member and associates it with the group.
      * This should be called if isSecretExchangeNeeded(...) is returning true
@@ -37,12 +45,12 @@ public interface ShiverSecurity {
      * encrypts the message and prepares it for sending
      *
      * @param groupId  - the id the member is associated with
-     * @param memberId - the id of the member
+     * @param recipient - the id of the member
      * @param message  - The data that should get encrypted
      * @return - the done encrypted message
      * @throws ASAPSecurityException - throws when something went wrong in the underlying ASAP structure
      */
-    byte[] encryptMessageContentForMemberOfGroup(CharSequence memberId, CharSequence groupId, byte[] message) throws ASAPSecurityException;
+    byte[] encryptMessageContentForMemberOfGroup(CharSequence recipient, CharSequence groupId, byte[] message) throws ASAPSecurityException;
 
     /**
      * Decrypts the message with the given senderId and groupId to find the fitting key

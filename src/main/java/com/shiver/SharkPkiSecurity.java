@@ -11,6 +11,7 @@ import net.sharksystem.pki.SharkPKIComponent;
 import net.sharksystem.utils.Log;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -20,6 +21,7 @@ import java.util.List;
 public class SharkPkiSecurity implements ShiverSecurity, SharkCredentialReceivedListener {
     private final SharkPKIComponent sharkPKIComponent;
     private final ShiverGroupStorage groupStorage;
+    private List<InvitedGroup> groupInvites = new ArrayList<>();
 
     public SharkPkiSecurity(SharkPKIComponent sharkPKIComponent, ShiverGroupStorage groupStorage) {
         this.sharkPKIComponent = sharkPKIComponent;
@@ -30,17 +32,66 @@ public class SharkPkiSecurity implements ShiverSecurity, SharkCredentialReceived
 
     @Override
     public void credentialReceived(CredentialMessage credentialMessage) {
+        if (checkInvites(credentialMessage)) {
+            return;
+        }
+
+        if (checkGroups(credentialMessage)) {
+            return;
+        }
+    }
+
+    private boolean checkInvites(CredentialMessage credentialMessage) {
         CharSequence subjectId = credentialMessage.getSubjectID();
         CharSequence memberId = extractMemberIdFromCombinedId(subjectId);
-        CharSequence groupId = extractMemberIdFromCombinedId(subjectId);
+        CharSequence groupId = extractGroupIdFromCombinedId(subjectId);
+
+        InvitedGroup foundInvite = null;
+        for (InvitedGroup invitedGroup : groupInvites) {
+            if (invitedGroup.groupId == groupId && invitedGroup.inviteIssuerId == memberId) {
+                foundInvite = invitedGroup;
+            }
+        }
+        if (foundInvite != null) {
+            groupInvites.remove(foundInvite);
+            try {
+                sharkPKIComponent.acceptAndSignCredential(credentialMessage);
+            } catch (IOException | ASAPSecurityException e) {
+                Log.writeLog(this, "Something went wrong when accepting message");
+            }
+            return true;
+        }
+
+        return false;
+    }
+
+    private boolean checkGroups(CredentialMessage credentialMessage) {
+        CharSequence subjectId = credentialMessage.getSubjectID();
+        CharSequence memberId = extractMemberIdFromCombinedId(subjectId);
+        CharSequence groupId = extractGroupIdFromCombinedId(subjectId);
 
         List<ShiverGroup> groups = groupStorage.getAllGroups();
+        //Check every group
+        for (ShiverGroup group : groups) {
+            if (group.getGroupId() == groupId) {
 
-        try {
-            sharkPKIComponent.acceptAndSignCredential(credentialMessage);
-        } catch (IOException | ASAPSecurityException e) {
-            Log.writeLog(this, "Something went wrong when accepting message");
+                //Check every member of group
+                for (CharSequence groupMemberId : group.getMemberIdList()) {
+                    if (groupMemberId == memberId) {
+                        try {
+                            sharkPKIComponent.acceptAndSignCredential(credentialMessage);
+                            return true;
+                        } catch (IOException | ASAPSecurityException e) {
+                            Log.writeLog(this, "Something went wrong when accepting message");
+                        }
+                    }
+                }
+
+                Log.writeLog(this, "No member associated with the member and group of the CredentialMessage");
+            }
         }
+
+        return false;
     }
 
     @Override
@@ -50,16 +101,21 @@ public class SharkPkiSecurity implements ShiverSecurity, SharkCredentialReceived
     }
 
     @Override
-    public void sendSecretToMemberOfGroup(CharSequence groupId, CharSequence memberId) throws IOException, ASAPException {
-        CharSequence membershipId = combineMemberAndGroupId(memberId, groupId);
+    public void acceptGroupInvite(CharSequence groupId, CharSequence memberId) {
+        groupInvites.add(new InvitedGroup(groupId, memberId));
+    }
+
+    @Override
+    public void sendSecretToMemberOfGroup(CharSequence groupId, CharSequence ownMemberId) throws IOException, ASAPException {
+        CharSequence membershipId = combineMemberAndGroupId(ownMemberId, groupId);
         CredentialMessageInMemo credentialMessage = new CredentialMessageInMemo(membershipId, sharkPKIComponent.getOwnerName(), sharkPKIComponent.getKeysCreationTime(), sharkPKIComponent.getPublicKey());
 
         sharkPKIComponent.sendOnlineCredentialMessage(credentialMessage);
     }
 
     @Override
-    public byte[] encryptMessageContentForMemberOfGroup(CharSequence memberId, CharSequence groupId, byte[] message) throws ASAPSecurityException {
-        CharSequence combinedId = combineMemberAndGroupId(memberId, groupId);
+    public byte[] encryptMessageContentForMemberOfGroup(CharSequence recipient, CharSequence groupId, byte[] message) throws ASAPSecurityException {
+        CharSequence combinedId = combineMemberAndGroupId(recipient, groupId);
 
         return ASAPCryptoAlgorithms.produceEncryptedMessagePackage(message, combinedId, sharkPKIComponent);
     }
@@ -91,5 +147,15 @@ public class SharkPkiSecurity implements ShiverSecurity, SharkCredentialReceived
 
     private CharSequence extractGroupIdFromCombinedId(CharSequence combinedId) {
         return combinedId.toString().split("#")[1];
+    }
+
+    private class InvitedGroup {
+        private CharSequence groupId;
+        private CharSequence inviteIssuerId;
+
+        public InvitedGroup(CharSequence groupId, CharSequence inviteIssuerId) {
+            this.groupId = groupId;
+            this.inviteIssuerId = inviteIssuerId;
+        }
     }
 }

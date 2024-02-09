@@ -110,7 +110,17 @@ public interface SharkShiverComponent extends SharkComponent {
      * @throws ASAPException          - throws when something went wrong in the underlying ASAP structure
      * @throws ShiverNoGroupException - throws when there is no group associated with the id
      */
-    void publishGroupUpdate(CharSequence groupId) throws ASAPException, ShiverNoGroupException;
+    void publishGroupUpdate(CharSequence groupId) throws ASAPException, ShiverNoGroupException, IOException;
+
+    /**
+     * Publishes a group update for currently online users only if the user wants update the group manually
+     *
+     * @param groupId - id of the group to publish
+     * @throws ASAPException          - throws when something went wrong in the underlying ASAP structure
+     * @throws ShiverNoGroupException - throws when there is no group associated with the id
+     * @throws IOException
+     */
+    void publishOnlineOnlyGroupUpdate(CharSequence groupId) throws ASAPException, ShiverNoGroupException, IOException;
 
     /**
      * Adds a receiver for messages that got send with the sendGroupMessage(...) function
