@@ -57,6 +57,14 @@ public interface SharkShiverComponent extends SharkComponent {
     void addPeerToGroup(CharSequence groupId, CharSequence peerId) throws ASAPException, ShiverNoGroupException, ShiverPermissionDeniedException, IOException;
 
     /**
+     * Call this method to accept an incoming group invite from a peer
+     *
+     * @param groupId - group to join
+     * @param peerId  - peer that sends the invite
+     */
+    void acceptGroupInvitationForGroupFromPeer(CharSequence groupId, CharSequence peerId);
+
+    /**
      * Removes a member from a group and publishes a group update
      *
      * @param groupId  - the id the member should get removed from
