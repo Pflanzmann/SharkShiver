@@ -1,5 +1,7 @@
 package com.shiver.models;
 
+import com.shiver.exceptions.ShiverNotSyncableException;
+
 import java.util.List;
 
 /**
@@ -25,6 +27,15 @@ public interface ShiverGroup {
     List<CharSequence> getMemberIdList();
 
     /**
+     * A group iteration should get updated every time the group gets changed
+     * This helps to know what groupUpdate is the newest.
+     * This could be a long that counts up or a date for the last update
+     *
+     * @return - integer representing the version
+     */
+    long getGroupIteration();
+
+    /**
      * Adds a member to the group
      *
      * @param groupMember - id of the member to add
@@ -38,15 +49,6 @@ public interface ShiverGroup {
      * @return - true if success, false if nothing changed
      */
     boolean removeMember(CharSequence groupMember);
-
-    /**
-     * A group iteration should get updated every time the group gets changed
-     * This helps to know what groupUpdate is the newest.
-     * This could be a long that counts up or a date for the last update
-     *
-     * @return - integer representing the version
-     */
-    long getGroupIteration();
 
     /**
      * A method to serialize the group object to be able to serialize it without an actual implementation
