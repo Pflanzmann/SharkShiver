@@ -18,12 +18,11 @@ public interface ShiverSecurity {
      * @param groupId  - the id the member is associated with
      * @param memberId - the id of the member
      * @return - true if a secret exchange is necessary
-     * @throws ASAPSecurityException - throws when something went wrong in the underlying ASAP structure
      */
-    boolean isSecretExchangeNeeded(CharSequence groupId, CharSequence memberId) throws ASAPSecurityException;
+    boolean isSecretExchangeNeeded(CharSequence groupId, CharSequence memberId);
 
     /**
-     * Accepts the group invite of of the group with the associated id from the associated member
+     * Accepts the group invite for the group with the associated id from the associated member
      * @param groupId
      * @param memberId
      * @return

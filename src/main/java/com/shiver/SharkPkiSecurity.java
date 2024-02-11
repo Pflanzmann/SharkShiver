@@ -95,9 +95,14 @@ public class SharkPkiSecurity implements ShiverSecurity, SharkCredentialReceived
     }
 
     @Override
-    public boolean isSecretExchangeNeeded(CharSequence groupId, CharSequence memberId) throws ASAPSecurityException {
+    public boolean isSecretExchangeNeeded(CharSequence groupId, CharSequence memberId) {
         CharSequence membershipId = combineMemberAndGroupId(memberId, groupId);
-        return sharkPKIComponent.getPublicKey(membershipId) != null;
+
+        try {
+            return sharkPKIComponent.getPublicKey(membershipId) == null;
+        } catch (ASAPSecurityException e) {
+            return true;
+        }
     }
 
     @Override
