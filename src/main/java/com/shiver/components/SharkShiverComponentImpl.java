@@ -296,7 +296,7 @@ class SharkShiverComponentImpl implements SharkShiverComponent, ASAPEnvironmentC
         ShiverPaths path = ShiverPaths.parsePathByValue(messageUri.getPath());
 
         switch (path) {
-            case SHIVER_GROUP_Message -> {
+            case SHIVER_GROUP_MESSAGE -> {
                 String groupId = messageUri.getQuery().replace("group_id=", "");
 
                 if (!groupStorage.hasGroupWithId(groupId)) {
