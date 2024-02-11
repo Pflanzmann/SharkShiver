@@ -1,5 +1,8 @@
 package com.shiver;
 
+import com.shiver.exceptions.ShiverDecryptionFailedException;
+import com.shiver.exceptions.ShiverEncryptionFailedException;
+import com.shiver.exceptions.ShiverSendingSecretFailedException;
 import net.sharksystem.asap.ASAPException;
 import net.sharksystem.asap.ASAPSecurityException;
 
@@ -23,6 +26,7 @@ public interface ShiverSecurity {
 
     /**
      * Accepts the group invite for the group with the associated id from the associated member
+     *
      * @param groupId
      * @param memberId
      * @return
@@ -38,18 +42,18 @@ public interface ShiverSecurity {
      * @throws ASAPException - throws when something went wrong in the underlying ASAP structure
      * @throws IOException   - throws when something went wrong in the underlying ASAP structure
      */
-    void sendSecretToMemberOfGroup(CharSequence groupId, CharSequence memberId) throws ASAPException, IOException;
+    void sendSecretToMemberOfGroup(CharSequence groupId, CharSequence memberId) throws ShiverSendingSecretFailedException;
 
     /**
      * encrypts the message and prepares it for sending
      *
-     * @param groupId  - the id the member is associated with
+     * @param groupId   - the id the member is associated with
      * @param recipient - the id of the member
-     * @param message  - The data that should get encrypted
+     * @param message   - The data that should get encrypted
      * @return - the done encrypted message
      * @throws ASAPSecurityException - throws when something went wrong in the underlying ASAP structure
      */
-    byte[] encryptMessageContentForMemberOfGroup(CharSequence recipient, CharSequence groupId, byte[] message) throws ASAPSecurityException;
+    byte[] encryptMessageContentForMemberOfGroup(CharSequence recipient, CharSequence groupId, byte[] message) throws ShiverEncryptionFailedException;
 
     /**
      * Decrypts the message with the given senderId and groupId to find the fitting key
@@ -61,7 +65,7 @@ public interface ShiverSecurity {
      * @throws ASAPException - throws when something went wrong in the underlying ASAP structure
      * @throws IOException   - throws when something went wrong in the underlying ASAP structure
      */
-    byte[] decryptMessageFromGroup(CharSequence senderId, CharSequence groupId, byte[] message) throws ASAPException, IOException;
+    byte[] decryptMessageFromGroup(CharSequence senderId, CharSequence groupId, byte[] message) throws ShiverDecryptionFailedException;
 
     /**
      * Invalidates all keys of a user when his keys got compromised.

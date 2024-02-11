@@ -1,7 +1,9 @@
 package com.shiver.components;
 
+import com.shiver.exceptions.ShiverEncryptionFailedException;
 import com.shiver.exceptions.ShiverNoGroupException;
 import com.shiver.exceptions.ShiverPermissionDeniedException;
+import com.shiver.exceptions.ShiverSendingSecretFailedException;
 import com.shiver.models.ShiverGroup;
 import net.sharksystem.ASAPFormats;
 import net.sharksystem.SharkComponent;
@@ -54,7 +56,7 @@ public interface SharkShiverComponent extends SharkComponent {
      * @throws ShiverPermissionDeniedException - throws when the user is in this group not permitted to execute this function
      * @throws IOException                     - throws when something went wrong in the underlying ASAP structure
      */
-    void addPeerToGroup(CharSequence groupId, CharSequence peerId) throws ASAPException, ShiverNoGroupException, ShiverPermissionDeniedException, IOException;
+    void addPeerToGroup(CharSequence groupId, CharSequence peerId) throws ASAPException, ShiverNoGroupException, ShiverPermissionDeniedException, IOException, ShiverSendingSecretFailedException, ShiverEncryptionFailedException;
 
     /**
      * Call this method to accept an incoming group invite from a peer
@@ -74,7 +76,7 @@ public interface SharkShiverComponent extends SharkComponent {
      * @throws ShiverPermissionDeniedException - throws when the user is in this group not permitted to execute this function
      * @throws IOException                     - throws when something went wrong in the underlying ASAP structure
      */
-    void removePeerFromGroup(CharSequence groupId, CharSequence memberId) throws ASAPException, ShiverNoGroupException, ShiverPermissionDeniedException, IOException;
+    void removePeerFromGroup(CharSequence groupId, CharSequence memberId) throws ASAPException, ShiverNoGroupException, ShiverPermissionDeniedException, IOException, ShiverEncryptionFailedException;
 
     /**
      * Deletes the group and sends out a delete group notification to all members
@@ -85,7 +87,7 @@ public interface SharkShiverComponent extends SharkComponent {
      * @throws ShiverPermissionDeniedException - throws when the user is in this group not permitted to execute this function
      * @throws IOException                     - throws when something went wrong in the underlying ASAP structure
      */
-    void deleteGroup(CharSequence groupId) throws ASAPException, ShiverNoGroupException, ShiverPermissionDeniedException, IOException;
+    void deleteGroup(CharSequence groupId) throws ASAPException, ShiverNoGroupException, ShiverPermissionDeniedException, IOException, ShiverEncryptionFailedException;
 
     /**
      * Sends a message to all group members
@@ -96,7 +98,7 @@ public interface SharkShiverComponent extends SharkComponent {
      * @throws ShiverNoGroupException - throws when there is no group to send a message to
      * @throws IOException            - throws when something went wrong in the underlying ASAP structure
      */
-    void sendGroupMessage(CharSequence groupId, byte[] message) throws ASAPException, ShiverNoGroupException, IOException;
+    void sendGroupMessage(CharSequence groupId, byte[] message) throws ASAPException, ShiverNoGroupException, IOException, ShiverEncryptionFailedException;
 
     /**
      * Invalidates all secrets associated with a member of a group.
@@ -109,7 +111,7 @@ public interface SharkShiverComponent extends SharkComponent {
      * @throws IOException                     - throws when something went wrong in the underlying ASAP structure
      * @throws ASAPException                   - throws when something went wrong in the underlying ASAP structure
      */
-    void invalidateMemberForGroup(CharSequence memberId, CharSequence groupId) throws ShiverNoGroupException, ShiverPermissionDeniedException, IOException, ASAPException;
+    void invalidateMemberForGroup(CharSequence memberId, CharSequence groupId) throws ShiverNoGroupException, ShiverPermissionDeniedException, IOException, ASAPException, ShiverEncryptionFailedException;
 
     /**
      * Publishes a group update if the user wants update the group manually
@@ -118,7 +120,7 @@ public interface SharkShiverComponent extends SharkComponent {
      * @throws ASAPException          - throws when something went wrong in the underlying ASAP structure
      * @throws ShiverNoGroupException - throws when there is no group associated with the id
      */
-    void publishGroupUpdate(CharSequence groupId) throws ASAPException, ShiverNoGroupException, IOException;
+    void publishGroupUpdate(CharSequence groupId) throws ASAPException, ShiverNoGroupException, IOException, ShiverEncryptionFailedException;
 
     /**
      * Publishes a group update for currently online users only if the user wants update the group manually
@@ -128,7 +130,7 @@ public interface SharkShiverComponent extends SharkComponent {
      * @throws ShiverNoGroupException - throws when there is no group associated with the id
      * @throws IOException
      */
-    void publishOnlineOnlyGroupUpdate(CharSequence groupId) throws ASAPException, ShiverNoGroupException, IOException;
+    void publishOnlineOnlyGroupUpdate(CharSequence groupId) throws ASAPException, ShiverNoGroupException, IOException, ShiverEncryptionFailedException;
 
     /**
      * Adds a receiver for messages that got send with the sendGroupMessage(...) function

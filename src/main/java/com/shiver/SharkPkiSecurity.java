@@ -1,7 +1,9 @@
 package com.shiver;
 
+import com.shiver.exceptions.ShiverDecryptionFailedException;
+import com.shiver.exceptions.ShiverEncryptionFailedException;
+import com.shiver.exceptions.ShiverSendingSecretFailedException;
 import com.shiver.models.ShiverGroup;
-import net.sharksystem.asap.ASAPException;
 import net.sharksystem.asap.ASAPSecurityException;
 import net.sharksystem.asap.crypto.ASAPCryptoAlgorithms;
 import net.sharksystem.asap.pki.CredentialMessageInMemo;
@@ -111,25 +113,35 @@ public class SharkPkiSecurity implements ShiverSecurity, SharkCredentialReceived
     }
 
     @Override
-    public void sendSecretToMemberOfGroup(CharSequence groupId, CharSequence ownMemberId) throws IOException, ASAPException {
-        CharSequence membershipId = combineMemberAndGroupId(ownMemberId, groupId);
-        CredentialMessageInMemo credentialMessage = new CredentialMessageInMemo(membershipId, sharkPKIComponent.getOwnerName(), sharkPKIComponent.getKeysCreationTime(), sharkPKIComponent.getPublicKey());
+    public void sendSecretToMemberOfGroup(CharSequence groupId, CharSequence ownMemberId) throws ShiverSendingSecretFailedException {
+        try {
+            CharSequence membershipId = combineMemberAndGroupId(ownMemberId, groupId);
+            CredentialMessageInMemo credentialMessage = new CredentialMessageInMemo(membershipId, sharkPKIComponent.getOwnerName(), sharkPKIComponent.getKeysCreationTime(), sharkPKIComponent.getPublicKey());
 
-        sharkPKIComponent.sendOnlineCredentialMessage(credentialMessage);
+            sharkPKIComponent.sendOnlineCredentialMessage(credentialMessage);
+        } catch (Exception e) {
+            throw new ShiverSendingSecretFailedException(e);
+        }
     }
 
     @Override
-    public byte[] encryptMessageContentForMemberOfGroup(CharSequence recipient, CharSequence groupId, byte[] message) throws ASAPSecurityException {
-        CharSequence combinedId = combineMemberAndGroupId(recipient, groupId);
-
-        return ASAPCryptoAlgorithms.produceEncryptedMessagePackage(message, combinedId, sharkPKIComponent);
+    public byte[] encryptMessageContentForMemberOfGroup(CharSequence recipient, CharSequence groupId, byte[] message) throws ShiverEncryptionFailedException {
+        try {
+            CharSequence combinedId = combineMemberAndGroupId(recipient, groupId);
+            return ASAPCryptoAlgorithms.produceEncryptedMessagePackage(message, combinedId, sharkPKIComponent);
+        } catch (ASAPSecurityException e) {
+            throw new ShiverEncryptionFailedException(e);
+        }
     }
 
     @Override
-    public byte[] decryptMessageFromGroup(CharSequence senderId, CharSequence groupId, byte[] message) throws IOException, ASAPException {
-        ASAPCryptoAlgorithms.EncryptedMessagePackage encryptedMessagePackage = ASAPCryptoAlgorithms.parseEncryptedMessagePackage(message);
-
-        return ASAPCryptoAlgorithms.decryptPackage(encryptedMessagePackage, sharkPKIComponent);
+    public byte[] decryptMessageFromGroup(CharSequence senderId, CharSequence groupId, byte[] message) throws ShiverDecryptionFailedException {
+        try {
+            ASAPCryptoAlgorithms.EncryptedMessagePackage encryptedMessagePackage = ASAPCryptoAlgorithms.parseEncryptedMessagePackage(message);
+            return ASAPCryptoAlgorithms.decryptPackage(encryptedMessagePackage, sharkPKIComponent);
+        } catch (Exception e) {
+            throw new ShiverDecryptionFailedException(e);
+        }
     }
 
     @Override

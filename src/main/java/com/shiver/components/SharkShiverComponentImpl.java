@@ -4,8 +4,10 @@ import com.shiver.ShiverGroupFactory;
 import com.shiver.ShiverGroupStorage;
 import com.shiver.ShiverMediator;
 import com.shiver.ShiverSecurity;
+import com.shiver.exceptions.ShiverEncryptionFailedException;
 import com.shiver.exceptions.ShiverNotSyncableException;
 import com.shiver.exceptions.ShiverPermissionDeniedException;
+import com.shiver.exceptions.ShiverSendingSecretFailedException;
 import com.shiver.models.ShiverGroup;
 import com.shiver.models.ShiverPaths;
 import net.sharksystem.asap.*;
@@ -64,7 +66,7 @@ class SharkShiverComponentImpl implements SharkShiverComponent, ASAPEnvironmentC
     }
 
     @Override
-    public void addPeerToGroup(CharSequence groupId, CharSequence peerId) throws ASAPException, ShiverPermissionDeniedException, IOException {
+    public void addPeerToGroup(CharSequence groupId, CharSequence peerId) throws ShiverPermissionDeniedException, ShiverSendingSecretFailedException, ShiverEncryptionFailedException, IOException, ASAPException {
         ShiverGroup group = groupStorage.getGroup(groupId);
 
         if (!groupStorage.isAdminOfGroup(groupId, ownPeer.getPeerID())) {
@@ -87,7 +89,7 @@ class SharkShiverComponentImpl implements SharkShiverComponent, ASAPEnvironmentC
     }
 
     @Override
-    public void removePeerFromGroup(CharSequence groupId, CharSequence memberId) throws ASAPException, ShiverPermissionDeniedException, IOException {
+    public void removePeerFromGroup(CharSequence groupId, CharSequence memberId) throws ASAPException, ShiverPermissionDeniedException, IOException, ShiverEncryptionFailedException {
         ShiverGroup group = groupStorage.getGroup(groupId);
 
         if (!groupStorage.isAdminOfGroup(groupId, ownPeer.getPeerID())) {
@@ -110,7 +112,7 @@ class SharkShiverComponentImpl implements SharkShiverComponent, ASAPEnvironmentC
     }
 
     @Override
-    public void deleteGroup(CharSequence groupId) throws ASAPException, ShiverPermissionDeniedException {
+    public void deleteGroup(CharSequence groupId) throws ASAPException, ShiverPermissionDeniedException, ShiverEncryptionFailedException {
         ShiverGroup group = groupStorage.getGroup(groupId);
 
         if (!groupStorage.isAdminOfGroup(groupId, ownPeer.getPeerID())) {
@@ -129,7 +131,7 @@ class SharkShiverComponentImpl implements SharkShiverComponent, ASAPEnvironmentC
     }
 
     @Override
-    public void sendGroupMessage(CharSequence groupId, byte[] message) throws ASAPException {
+    public void sendGroupMessage(CharSequence groupId, byte[] message) throws ASAPException, ShiverEncryptionFailedException {
         ShiverGroup group = groupStorage.getGroup(groupId);
         List<CharSequence> membershipIds = group.getMemberIdList();
 
@@ -149,7 +151,7 @@ class SharkShiverComponentImpl implements SharkShiverComponent, ASAPEnvironmentC
     }
 
     @Override
-    public void invalidateMemberForGroup(CharSequence memberId, CharSequence groupId) throws ShiverPermissionDeniedException, ASAPException {
+    public void invalidateMemberForGroup(CharSequence memberId, CharSequence groupId) throws ShiverPermissionDeniedException, ASAPException, ShiverEncryptionFailedException {
         ShiverGroup group = groupStorage.getGroup(groupId);
 
         if (!groupStorage.isAdminOfGroup(groupId, ownPeer.getPeerID())) {
@@ -167,13 +169,13 @@ class SharkShiverComponentImpl implements SharkShiverComponent, ASAPEnvironmentC
     }
 
     @Override
-    public void publishGroupUpdate(CharSequence groupId) throws ASAPException, IOException {
+    public void publishGroupUpdate(CharSequence groupId) throws ASAPException, IOException, ShiverEncryptionFailedException {
         ShiverGroup group = groupStorage.getGroup(groupId);
         publishGroupUpdate(group, false);
     }
 
     @Override
-    public void publishOnlineOnlyGroupUpdate(CharSequence groupId) throws ASAPException, IOException {
+    public void publishOnlineOnlyGroupUpdate(CharSequence groupId) throws ASAPException, IOException, ShiverEncryptionFailedException {
         ShiverGroup group = groupStorage.getGroup(groupId);
         publishGroupUpdate(group, true);
     }
@@ -188,7 +190,7 @@ class SharkShiverComponentImpl implements SharkShiverComponent, ASAPEnvironmentC
         this.messageReceivers.remove(shiverMessageReceiver);
     }
 
-    private void publishGroupUpdate(ShiverGroup group, boolean onlineOnly) throws ASAPException, IOException {
+    private void publishGroupUpdate(ShiverGroup group, boolean onlineOnly) throws ShiverEncryptionFailedException, IOException, ASAPException {
         byte[] groupBytes = group.serialize();
 
         for (CharSequence member : group.getMemberIdList()) {
@@ -219,7 +221,7 @@ class SharkShiverComponentImpl implements SharkShiverComponent, ASAPEnvironmentC
         }
     }
 
-    private void publishGroupDelete(ShiverGroup group, List<CharSequence> members) throws ASAPException {
+    private void publishGroupDelete(ShiverGroup group, List<CharSequence> members) throws ASAPException, ShiverEncryptionFailedException {
         byte[] emptyMessageBytes = new byte[0];
 
         for (CharSequence member : members) {
@@ -242,7 +244,7 @@ class SharkShiverComponentImpl implements SharkShiverComponent, ASAPEnvironmentC
         }
     }
 
-    private void publishInvalidateMember(ShiverGroup group, List<CharSequence> members, CharSequence memberId) throws ASAPException {
+    private void publishInvalidateMember(ShiverGroup group, List<CharSequence> members, CharSequence memberId) throws ASAPException, ShiverEncryptionFailedException {
         byte[] emptyMessageBytes = memberId.toString().getBytes(StandardCharsets.UTF_8);
 
         for (CharSequence member : members) {
@@ -281,7 +283,7 @@ class SharkShiverComponentImpl implements SharkShiverComponent, ASAPEnvironmentC
                     if (group.getMemberIdList().contains(peerId) && shiverSecurity.isSecretExchangeNeeded(group.getGroupId(), peerId)) {
                         shiverSecurity.sendSecretToMemberOfGroup(group.getGroupId(), peerId);
                     }
-                } catch (ASAPException | IOException e) {
+                } catch (Exception e) {
                     Log.writeLogErr(this, "Something went wrong when sending the message", e.getMessage());
                 }
             }
