@@ -1,12 +1,10 @@
 package com.shiver.models;
 
 public enum ShiverPaths {
-    SHIVER_GROUP_MESSAGE("shark/shiver/group_message"),
-    SHIVER_GROUP_UPDATE("shark/shiver/group_update"),
-    SHIVER_GROUP_DELETE("shark/shiver/group_delete"),
-    SHIVER_INVALIDATE_MEMBER("shark/shiver/group_invalidate_user");
+    SHIVER_GROUP_CREDENTIAL_MESSAGE_UPFLOW("shark/shiver/group_credential_message/upflow"),
+    SHIVER_GROUP_CREDENTIAL_MESSAGE_BROADCAST("shark/shiver/group_credential_message/broadcast");
 
-    private CharSequence value = null;
+    private final CharSequence value;
 
     private ShiverPaths(String value) {
         this.value = value;
