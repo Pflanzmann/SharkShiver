@@ -17,12 +17,6 @@ public class ShiverDHKeyPairStorageInMemo implements ShiverDHKeyPairStorage {
     private int l = 2048;
 
     @Override
-
-    public void storeKeyPairByGroupId(CharSequence groupId, KeyPair keyPair) {
-        keypairs.put(groupId, keyPair);
-    }
-
-    @Override
     public KeyPair getOrGenerateKeyPairForGroup(CharSequence groupId) throws ShiverDHKeyGenerationException {
         if (keypairs.containsKey(groupId)) {
             return keypairs.get(groupId);

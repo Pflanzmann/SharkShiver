@@ -1,7 +1,7 @@
 package com.shiver.components;
 
 import com.shiver.exceptions.*;
-import com.shiver.logic.ShiverCredentialReceiver;
+import com.shiver.logic.ShiverEventListener;
 import com.shiver.logic.ShiverSecurity;
 import com.shiver.models.GroupCredentialMessage;
 import com.shiver.storager.ShiverDHKeyPairStorage;
@@ -23,12 +23,12 @@ import java.util.List;
  * This component implements a single point of truth concept for the group. Only the admin is able to alter the group and
  * members are only able to send messages and exchange certificates.
  */
-class SharkShiverComponentImpl implements SharkShiverComponent {
+class ShiverComponentImpl implements ShiverComponent {
     private final ShiverSecurity shiverSecurity;
     private final ShiverKeyStorage shiverKeyStorage;
     private final ShiverDHKeyPairStorage shiverDHKeyPairStorage;
 
-    SharkShiverComponentImpl(ShiverSecurity shiverSecurity, ShiverKeyStorage shiverKeyStorage, ShiverDHKeyPairStorage shiverDHKeyPairStorage) {
+    ShiverComponentImpl(ShiverSecurity shiverSecurity, ShiverKeyStorage shiverKeyStorage, ShiverDHKeyPairStorage shiverDHKeyPairStorage) {
         this.shiverSecurity = shiverSecurity;
         this.shiverKeyStorage = shiverKeyStorage;
         this.shiverDHKeyPairStorage = shiverDHKeyPairStorage;
@@ -40,13 +40,13 @@ class SharkShiverComponentImpl implements SharkShiverComponent {
     }
 
     @Override
-    public void addShiverMessageReceiver(ShiverCredentialReceiver shiverMessageReceiver) {
-        shiverSecurity.addShiverMessageReceiver(shiverMessageReceiver);
+    public void addShiverEventListener(ShiverEventListener shiverEventListener) {
+        shiverSecurity.addShiverEventListener(shiverEventListener);
     }
 
     @Override
-    public void removeShiverMessageReceiver(ShiverCredentialReceiver shiverMessageReceiver) {
-        shiverSecurity.removeShiverMessageReceiver(shiverMessageReceiver);
+    public void removeShiverEventListener(ShiverEventListener shiverEventListener) {
+        shiverSecurity.removeShiverEventListener(shiverEventListener);
     }
 
     @Override
@@ -57,6 +57,11 @@ class SharkShiverComponentImpl implements SharkShiverComponent {
     @Override
     public void acceptGroupCredentialMessage(GroupCredentialMessage groupCredentialMessage) throws ShiverDHKeyGenerationException, IOException, NoSuchAlgorithmException, InvalidKeySpecException, InvalidKeyException, ASAPException {
         shiverSecurity.acceptGroupCredentialMessage(groupCredentialMessage);
+    }
+
+    @Override
+    public boolean hasKeyForGroupId(CharSequence groupId) {
+        return shiverKeyStorage.getKeyForGroup(groupId) != null;
     }
 
     @Override

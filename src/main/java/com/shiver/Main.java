@@ -1,11 +1,15 @@
 package com.shiver;
 
+import com.shiver.models.ShiverPaths;
 import net.sharksystem.asap.crypto.ASAPCryptoAlgorithms;
 
 import javax.crypto.Cipher;
 import javax.crypto.KeyAgreement;
+import javax.crypto.SecretKey;
+import javax.crypto.SecretKeyFactory;
 import javax.crypto.interfaces.DHPublicKey;
 import javax.crypto.spec.DHParameterSpec;
+import javax.crypto.spec.PBEKeySpec;
 import javax.crypto.spec.SecretKeySpec;
 import java.io.*;
 import java.security.*;
@@ -364,15 +368,38 @@ public class Main {
          * passed to the Cipher.init() method.
          */
         System.out.println("Use shared secret as SecretKey object ...");
-        MessageDigest sha256 = MessageDigest.getInstance("SHA-256");
+
+        if(true) {
+            char[] dhSecretChars = new String(aliceSharedSecret).toCharArray(); // Convert byte[] to char[] as PBEKeySpec requires char[]
+            byte[] salt = new byte[16]; // Should use a secure random salt in real applications
+            int iterationCount = 65536;
+            int keyLength = 256; // Key length in bits
+
+            SecretKeyFactory factory = SecretKeyFactory.getInstance("PBKDF2WithHmacSHA256");
+            PBEKeySpec spec = new PBEKeySpec(dhSecretChars, salt, iterationCount, keyLength);
+            SecretKey derivedKey = factory.generateSecret(spec);
+            SecretKey finalKey = new SecretKeySpec(derivedKey.getEncoded(), "AES"); // For AES, for example
+            System.out.println("alicekey: " + toHexString(finalKey.getEncoded()));
+        }
+        if(true){
+            if(true) {
+                char[] dhSecretChars = new String(bobSharedSecret).toCharArray(); // Convert byte[] to char[] as PBEKeySpec requires char[]
+                byte[] salt = new byte[16]; // Should use a secure random salt in real applications
+                int iterationCount = 65536;
+                int keyLength = 256; // Key length in bits
+
+                SecretKeyFactory factory = SecretKeyFactory.getInstance("PBKDF2WithHmacSHA256");
+                PBEKeySpec spec = new PBEKeySpec(dhSecretChars, salt, iterationCount, keyLength);
+                SecretKey derivedKey = factory.generateSecret(spec);
+                SecretKey finalKey = new SecretKeySpec(derivedKey.getEncoded(), "AES"); // For AES, for example
+                System.out.println("alicekey: " + toHexString(finalKey.getEncoded()));
+            }
+        }
 
         Key keytemp = ASAPCryptoAlgorithms.generateSymmetricKey("AES", 128);
 
         SecretKeySpec bobAesKey = new SecretKeySpec(bobSharedSecret, 0, 16, "AES");
         SecretKeySpec aliceAesKey = new SecretKeySpec(aliceSharedSecret, 0, 16, "AES");
-
-        System.out.println("alicekey: " + aliceSharedSecret.length);
-        System.out.println("bobkey: " + toHexString(keytemp.getEncoded()));
 
         /*
          * Bob encrypts, using AES in CBC mode
