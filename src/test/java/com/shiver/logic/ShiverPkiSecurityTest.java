@@ -24,10 +24,11 @@ import org.mockito.Mockito;
 
 import javax.crypto.KeyAgreement;
 import javax.crypto.spec.SecretKeySpec;
-import java.io.*;
+import java.io.ByteArrayOutputStream;
+import java.io.DataOutputStream;
+import java.io.IOException;
 import java.security.*;
 import java.security.spec.InvalidKeySpecException;
-import java.security.spec.X509EncodedKeySpec;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -163,7 +164,7 @@ public class ShiverPkiSecurityTest {
     }
 
     @Test
-    public void acceptGroupCredentialMessage_successNotLast() throws NoSuchAlgorithmException, IOException, ShiverDHKeyGenerationException, InvalidKeySpecException, InvalidKeyException, ASAPException, ClassNotFoundException {
+    public void acceptGroupCredentialMessage_successNotLast() throws NoSuchAlgorithmException, IOException, ShiverDHKeyGenerationException, InvalidKeySpecException, InvalidKeyException, ASAPException, ClassNotFoundException, ShiverPeerNotVerifiedException {
         List<CharSequence> testPeers = new ArrayList<>();
         testPeers.add(TEST_PEER_ID_1);
         testPeers.add(TEST_OWN_ASAP_ID);
@@ -221,7 +222,7 @@ public class ShiverPkiSecurityTest {
     }
 
     @Test
-    public void acceptGroupCredentialMessage_successIsLast_twoMember() throws NoSuchAlgorithmException, IOException, ShiverDHKeyGenerationException, InvalidKeySpecException, InvalidKeyException, ASAPException, ClassNotFoundException {
+    public void acceptGroupCredentialMessage_successIsLast_twoMember() throws NoSuchAlgorithmException, IOException, ShiverDHKeyGenerationException, InvalidKeySpecException, InvalidKeyException, ASAPException, ClassNotFoundException, ShiverPeerNotVerifiedException {
         List<CharSequence> testPeers = new ArrayList<>();
         testPeers.add(TEST_PEER_ID_1);
         testPeers.add(TEST_OWN_ASAP_ID);
@@ -294,12 +295,6 @@ public class ShiverPkiSecurityTest {
 
         HashMap<CharSequence, byte[]> keys = new HashMap<>();
         keys.put(TEST_OWN_ASAP_ID, getPublicKeyBytes(testKeyPair1.getPublic()));
-
-        KeyAgreement ownTestKeyAgreement = KeyAgreement.getInstance("DH");
-        ownTestKeyAgreement.init(ownKeyPair.getPrivate());
-        ownTestKeyAgreement.doPhase(testKeyPair1.getPublic(), true);
-        byte[] resultOwnSecret = ownTestKeyAgreement.generateSecret();
-        Key finalKey = new SecretKeySpec(resultOwnSecret, 0, 16, "AES");
 
         GroupCredentialMessage testGroupCredentialMessage = new GroupCredentialMessageImpl(
                 TEST_GROUP_ID,
@@ -521,21 +516,5 @@ public class ShiverPkiSecurityTest {
         dos.write(byteEncodedPublicKey);
 
         return baos.toByteArray();
-    }
-
-    private PublicKey readPublicKeyFromBytes(byte[] publicKeyBytes) throws IOException, NoSuchAlgorithmException, InvalidKeySpecException {
-        ByteArrayInputStream bais = new ByteArrayInputStream(publicKeyBytes);
-        DataInputStream dis = new DataInputStream(bais);
-
-        dis.readUTF();
-        String algorithm = dis.readUTF();
-        int len = dis.readInt();
-        byte[] byteEncodedPublicKey = new byte[len];
-        dis.readFully(byteEncodedPublicKey);
-
-        X509EncodedKeySpec pubKeySpec = new X509EncodedKeySpec(byteEncodedPublicKey);
-        KeyFactory keyFactory = KeyFactory.getInstance(algorithm);
-
-        return keyFactory.generatePublic(pubKeySpec);
     }
 }

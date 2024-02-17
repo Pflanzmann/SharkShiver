@@ -20,7 +20,7 @@ public class ShiverComponentFactory implements SharkComponentFactory {
      * @param shiverKeyStorage
      * @param shiverDHKeyPairStorage
      */
-    public ShiverComponentFactory(ShiverSecurity shiverSecurity, ShiverKeyStorage shiverKeyStorage, ShiverDHKeyPairStorage shiverDHKeyPairStorage) {
+    public ShiverComponentFactory(ShiverSecurity shiverSecurity, ShiverDHKeyPairStorage shiverDHKeyPairStorage, ShiverKeyStorage shiverKeyStorage) {
         instance = new ShiverComponentImpl(shiverSecurity, shiverKeyStorage, shiverDHKeyPairStorage);
     }
 

@@ -69,5 +69,5 @@ public interface ShiverSecurity {
      * @throws InvalidKeyException
      * @throws InvalidKeySpecException
      */
-    void acceptGroupCredentialMessage(GroupCredentialMessage groupCredentialMessage) throws IOException, ASAPException, ShiverDHKeyGenerationException, NoSuchAlgorithmException, InvalidKeyException, InvalidKeySpecException;
+    void acceptGroupCredentialMessage(GroupCredentialMessage groupCredentialMessage) throws IOException, ASAPException, ShiverDHKeyGenerationException, NoSuchAlgorithmException, InvalidKeyException, InvalidKeySpecException, ShiverPeerNotVerifiedException;
 }

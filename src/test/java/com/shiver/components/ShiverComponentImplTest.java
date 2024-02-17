@@ -88,7 +88,7 @@ public class ShiverComponentImplTest {
     }
 
     @Test
-    public void acceptGroupCredentialMessage_doesNotThrow() throws ShiverDHKeyGenerationException, IOException, NoSuchAlgorithmException, InvalidKeySpecException, InvalidKeyException, ASAPException {
+    public void acceptGroupCredentialMessage_doesNotThrow() throws ShiverDHKeyGenerationException, IOException, NoSuchAlgorithmException, InvalidKeySpecException, InvalidKeyException, ASAPException, ShiverPeerNotVerifiedException {
         GroupCredentialMessage mockGroupCredentialMessage = Mockito.mock(GroupCredentialMessage.class);
 
         Assertions.assertDoesNotThrow(() -> {
@@ -99,7 +99,7 @@ public class ShiverComponentImplTest {
     }
 
     @Test
-    public void acceptGroupCredentialMessage_doesThrow() throws ShiverDHKeyGenerationException, IOException, NoSuchAlgorithmException, InvalidKeySpecException, InvalidKeyException, ASAPException {
+    public void acceptGroupCredentialMessage_doesThrow() throws ShiverDHKeyGenerationException, IOException, NoSuchAlgorithmException, InvalidKeySpecException, InvalidKeyException, ASAPException, ShiverPeerNotVerifiedException {
         GroupCredentialMessage mockGroupCredentialMessage = Mockito.mock(GroupCredentialMessage.class);
 
         Mockito.doThrow(new ShiverDHKeyGenerationException()).when(mockShiverSecurity).acceptGroupCredentialMessage(mockGroupCredentialMessage);
@@ -162,7 +162,7 @@ public class ShiverComponentImplTest {
     }
 
     @Test
-    public void encryptMessageForGroup_throwsShiverNoGroupKeyException() throws ShiverNoGroupKeyException, ShiverEncryptionException, NoSuchAlgorithmException, NoSuchPaddingException, IllegalBlockSizeException, BadPaddingException, InvalidKeyException {
+    public void encryptMessageForGroup_throwsShiverNoGroupKeyException() {
         String testMessage = "test_message";
 
         byte[] invalidKey = new byte[]{
@@ -222,7 +222,7 @@ public class ShiverComponentImplTest {
     }
 
     @Test
-    public void decryptMessageForGroup_throwsShiverDecryptionException() throws NoSuchAlgorithmException, NoSuchPaddingException, IllegalBlockSizeException, BadPaddingException, InvalidKeyException, ShiverDecryptionException {
+    public void decryptMessageForGroup_throwsShiverDecryptionException() throws NoSuchAlgorithmException, NoSuchPaddingException, IllegalBlockSizeException, BadPaddingException, InvalidKeyException {
         String testMessage = "test_message";
 
         KeyGenerator keyGenerator = KeyGenerator.getInstance("AES");

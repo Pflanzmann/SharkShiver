@@ -66,7 +66,7 @@ public class ShiverPkiSecurity implements ShiverSecurity, ASAPMessageReceivedLis
         orderedListOfPeers.remove(asapPeer.getPeerID());
         orderedListOfPeers.add(0, asapPeer.getPeerID());
 
-        if (peers.size() <= 1) {
+        if (orderedListOfPeers.size() <= 1) {
             throw new ShiverGroupSizeException();
         }
 
@@ -110,7 +110,7 @@ public class ShiverPkiSecurity implements ShiverSecurity, ASAPMessageReceivedLis
     }
 
     @Override
-    public void acceptGroupCredentialMessage(GroupCredentialMessage groupCredentialMessage) throws IOException, ASAPException, ShiverDHKeyGenerationException, NoSuchAlgorithmException, InvalidKeyException, InvalidKeySpecException {
+    public void acceptGroupCredentialMessage(GroupCredentialMessage groupCredentialMessage) throws IOException, ASAPException, ShiverDHKeyGenerationException, NoSuchAlgorithmException, InvalidKeyException, InvalidKeySpecException, ShiverPeerNotVerifiedException {
         List<CharSequence> peers = groupCredentialMessage.getPeerIds();
         boolean isLast = peers.indexOf(asapPeer.getPeerID()) == peers.size() - 1;
 
@@ -129,6 +129,11 @@ public class ShiverPkiSecurity implements ShiverSecurity, ASAPMessageReceivedLis
 
             for (ShiverEventListener messageReceiver : messageReceivers) {
                 messageReceiver.onReceivedGroupKey(groupCredentialMessage.getGroupId());
+            }
+        } else {
+            CharSequence receiver = peers.get(peers.indexOf(asapPeer.getPeerID()) + 1);
+            if (verifyPeer(receiver)) {
+                throw new ShiverPeerNotVerifiedException();
             }
         }
 

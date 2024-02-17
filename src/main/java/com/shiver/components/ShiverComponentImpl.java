@@ -55,7 +55,7 @@ class ShiverComponentImpl implements ShiverComponent {
     }
 
     @Override
-    public void acceptGroupCredentialMessage(GroupCredentialMessage groupCredentialMessage) throws ShiverDHKeyGenerationException, IOException, NoSuchAlgorithmException, InvalidKeySpecException, InvalidKeyException, ASAPException {
+    public void acceptGroupCredentialMessage(GroupCredentialMessage groupCredentialMessage) throws ShiverDHKeyGenerationException, IOException, NoSuchAlgorithmException, InvalidKeySpecException, InvalidKeyException, ASAPException, ShiverPeerNotVerifiedException {
         shiverSecurity.acceptGroupCredentialMessage(groupCredentialMessage);
     }
 

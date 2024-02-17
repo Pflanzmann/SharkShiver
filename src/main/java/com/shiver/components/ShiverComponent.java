@@ -64,7 +64,7 @@ public interface ShiverComponent extends SharkComponent {
      * @throws InvalidKeyException
      * @throws ASAPException
      */
-    void acceptGroupCredentialMessage(GroupCredentialMessage groupCredentialMessage) throws ShiverDHKeyGenerationException, IOException, NoSuchAlgorithmException, InvalidKeySpecException, InvalidKeyException, ASAPException;
+    void acceptGroupCredentialMessage(GroupCredentialMessage groupCredentialMessage) throws ShiverDHKeyGenerationException, IOException, NoSuchAlgorithmException, InvalidKeySpecException, InvalidKeyException, ASAPException, ShiverPeerNotVerifiedException;
 
     /**
      * Returns a boolean if a key for a groupId exists or not
