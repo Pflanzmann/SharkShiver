@@ -7,6 +7,7 @@ import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Objects;
 
 public class GroupCredentialMessageImpl implements GroupCredentialMessage, Serializable {
     private final CharSequence groupId;
@@ -35,7 +36,6 @@ public class GroupCredentialMessageImpl implements GroupCredentialMessage, Seria
     public void putKeyForPeerId(CharSequence peerId, byte[] key) {
         keys.put(peerId, key);
     }
-
 
     public byte[] serialize() throws IOException {
         ByteArrayOutputStream baos = new ByteArrayOutputStream();

@@ -4,8 +4,8 @@ import com.shiver.exceptions.*;
 import com.shiver.logic.ShiverEventListener;
 import com.shiver.logic.ShiverSecurity;
 import com.shiver.models.GroupCredentialMessage;
-import com.shiver.storager.ShiverDHKeyPairStorage;
-import com.shiver.storager.ShiverKeyStorage;
+import com.shiver.storage.ShiverDHKeyPairStorage;
+import com.shiver.storage.ShiverKeyStorage;
 import net.sharksystem.asap.ASAPException;
 import net.sharksystem.asap.ASAPPeer;
 
@@ -50,8 +50,8 @@ class ShiverComponentImpl implements ShiverComponent {
     }
 
     @Override
-    public void startCreatingGroupKeyProcess(List<CharSequence> peerIds) throws ShiverDHKeyGenerationException, ShiverGroupSizeException, IOException, ASAPException, ShiverPeerNotVerifiedException {
-        shiverSecurity.startKeyExchangeWithPeers(peerIds);
+    public CharSequence startCreatingGroupKeyProcess(List<CharSequence> peerIds) throws ShiverDHKeyGenerationException, ShiverGroupSizeException, IOException, ASAPException, ShiverPeerNotVerifiedException {
+        return shiverSecurity.startKeyExchangeWithPeers(peerIds);
     }
 
     @Override

@@ -1,14 +1,11 @@
 package com.shiver.components;
 
-import com.shiver.exceptions.ShiverDHKeyGenerationException;
-import com.shiver.exceptions.ShiverDecryptionException;
-import com.shiver.exceptions.ShiverEncryptionException;
-import com.shiver.exceptions.ShiverNoGroupKeyException;
+import com.shiver.exceptions.*;
 import com.shiver.logic.ShiverEventListener;
 import com.shiver.logic.ShiverSecurity;
 import com.shiver.models.GroupCredentialMessage;
-import com.shiver.storager.ShiverDHKeyPairStorage;
-import com.shiver.storager.ShiverKeyStorage;
+import com.shiver.storage.ShiverDHKeyPairStorage;
+import com.shiver.storage.ShiverKeyStorage;
 import net.sharksystem.asap.ASAPException;
 import net.sharksystem.asap.ASAPPeer;
 import org.junit.jupiter.api.Assertions;
@@ -23,6 +20,8 @@ import java.security.InvalidKeyException;
 import java.security.Key;
 import java.security.NoSuchAlgorithmException;
 import java.security.spec.InvalidKeySpecException;
+import java.util.ArrayList;
+import java.util.List;
 
 public class ShiverComponentImplTest {
 
@@ -73,6 +72,19 @@ public class ShiverComponentImplTest {
         shiverComponent.removeShiverEventListener(mockShiverEventListener);
 
         Mockito.verify(mockShiverSecurity, Mockito.times(1)).removeShiverEventListener(mockShiverEventListener);
+    }
+
+    @Test
+    public void startCreatingGroupKeyProcess() throws ShiverDHKeyGenerationException, IOException, ASAPException, ShiverGroupSizeException, ShiverPeerNotVerifiedException {
+        String testGroupId = "testGroupId";
+        List<CharSequence> testPeers = new ArrayList<>();
+
+        Mockito.when(mockShiverSecurity.startKeyExchangeWithPeers(testPeers)).thenReturn(testGroupId);
+
+        CharSequence result = shiverComponent.startCreatingGroupKeyProcess(testPeers);
+
+        Assertions.assertEquals(testGroupId, result);
+        Mockito.verify(mockShiverSecurity, Mockito.times(1)).startKeyExchangeWithPeers(testPeers);
     }
 
     @Test

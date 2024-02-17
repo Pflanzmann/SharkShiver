@@ -4,11 +4,12 @@ import com.shiver.components.ShiverComponent;
 import com.shiver.exceptions.ShiverDHKeyGenerationException;
 import com.shiver.exceptions.ShiverGroupSizeException;
 import com.shiver.exceptions.ShiverPeerNotVerifiedException;
+import com.shiver.exceptions.ShiverUnknownURIException;
 import com.shiver.models.GroupCredentialMessage;
 import com.shiver.models.GroupCredentialMessageImpl;
 import com.shiver.models.ShiverPaths;
-import com.shiver.storager.ShiverDHKeyPairStorage;
-import com.shiver.storager.ShiverKeyStorage;
+import com.shiver.storage.ShiverDHKeyPairStorage;
+import com.shiver.storage.ShiverKeyStorage;
 import net.sharksystem.asap.*;
 import net.sharksystem.asap.crypto.ASAPCryptoAlgorithms;
 import net.sharksystem.pki.SharkPKIComponent;
@@ -27,7 +28,7 @@ import java.util.*;
  * This class is the main implementation of the [ShiverSecurity] interface.
  * This class has no need to be loaded or stored because all data is handled by the [SharkPKIComponent] and [GroupStorage]
  */
-public class SharkPkiSecurity implements ShiverSecurity, ASAPMessageReceivedListener {
+public class ShiverPkiSecurity implements ShiverSecurity, ASAPMessageReceivedListener {
     private ASAPPeer asapPeer;
     private final SharkPKIComponent sharkPKIComponent;
     private final ShiverDHKeyPairStorage dhKeyPairStorage;
@@ -36,7 +37,7 @@ public class SharkPkiSecurity implements ShiverSecurity, ASAPMessageReceivedList
 
     private final List<ShiverEventListener> messageReceivers = new ArrayList<>();
 
-    public SharkPkiSecurity(SharkPKIComponent sharkPKIComponent, ShiverDHKeyPairStorage dhKeyPairStorage, ShiverKeyStorage shiverKeyStorage) {
+    public ShiverPkiSecurity(SharkPKIComponent sharkPKIComponent, ShiverDHKeyPairStorage dhKeyPairStorage, ShiverKeyStorage shiverKeyStorage) {
         this.sharkPKIComponent = sharkPKIComponent;
         this.dhKeyPairStorage = dhKeyPairStorage;
         this.shiverKeyStorage = shiverKeyStorage;
@@ -60,7 +61,7 @@ public class SharkPkiSecurity implements ShiverSecurity, ASAPMessageReceivedList
     }
 
     @Override
-    public void startKeyExchangeWithPeers(List<CharSequence> peers) throws ShiverPeerNotVerifiedException, ShiverDHKeyGenerationException, IOException, ASAPException, ShiverGroupSizeException {
+    public CharSequence startKeyExchangeWithPeers(List<CharSequence> peers) throws ShiverPeerNotVerifiedException, ShiverDHKeyGenerationException, IOException, ASAPException, ShiverGroupSizeException {
         List<CharSequence> orderedListOfPeers = new ArrayList<>(peers);
         orderedListOfPeers.remove(asapPeer.getPeerID());
         orderedListOfPeers.add(0, asapPeer.getPeerID());
@@ -105,6 +106,7 @@ public class SharkPkiSecurity implements ShiverSecurity, ASAPMessageReceivedList
                 ShiverPaths.SHIVER_GROUP_CREDENTIAL_MESSAGE_UPFLOW.toString(),
                 encryptedMessage
         );
+        return groupId;
     }
 
     @Override
@@ -135,9 +137,14 @@ public class SharkPkiSecurity implements ShiverSecurity, ASAPMessageReceivedList
                 continue;
             }
 
-            Key key = readPublicKeyFromBytes(groupCredentialMessage.getKeys().get(peer));
-            Key newKey = keyAgreement.doPhase(key, false);
-            groupCredentialMessage.putKeyForPeerId(peer, getPublicKeyBytes(newKey));
+            byte[] oldKey = groupCredentialMessage.getKeys().get(peer);
+            if (oldKey != null) {
+                Key key = readPublicKeyFromBytes(oldKey);
+                Key newKey = keyAgreement.doPhase(key, false);
+                groupCredentialMessage.putKeyForPeerId(peer, getPublicKeyBytes(newKey));
+            } else {
+                groupCredentialMessage.putKeyForPeerId(peer, getPublicKeyBytes(keyPair.getPublic()));
+            }
         }
 
         if (!isLast) {
@@ -165,7 +172,7 @@ public class SharkPkiSecurity implements ShiverSecurity, ASAPMessageReceivedList
 
                 asapPeer.sendASAPMessage(
                         ShiverComponent.SHARK_SHIVER_APP,
-                        ShiverPaths.SHIVER_GROUP_CREDENTIAL_MESSAGE_UPFLOW.toString(),
+                        ShiverPaths.SHIVER_GROUP_CREDENTIAL_MESSAGE_BROADCAST.toString(),
                         encryptedMessage
                 );
             }
@@ -177,6 +184,15 @@ public class SharkPkiSecurity implements ShiverSecurity, ASAPMessageReceivedList
         URI messageUri = URI.create(asapMessages.getURI().toString());
         ShiverPaths path = ShiverPaths.parsePathByValue(messageUri.getPath());
 
+        if (path == null) {
+            Log.writeLogErr(this, "Error receiving message for an unknown path");
+            for (ShiverEventListener messageReceiver : messageReceivers) {
+                messageReceiver.onErrorReceivingGroupCredentialMessage(asapMessages.getURI().toString(), new ShiverUnknownURIException());
+            }
+
+            return;
+        }
+
         switch (path) {
             case SHIVER_GROUP_CREDENTIAL_MESSAGE_UPFLOW -> {
                 Iterator<byte[]> messages = asapMessages.getMessages();
@@ -184,7 +200,8 @@ public class SharkPkiSecurity implements ShiverSecurity, ASAPMessageReceivedList
                     byte[] message = messages.next();
 
                     try {
-                        byte[] plainMessageBytes = ASAPCryptoAlgorithms.decryptAsymmetric(message, sharkPKIComponent);
+                        ASAPCryptoAlgorithms.EncryptedMessagePackage encryptedMessagePackage = ASAPCryptoAlgorithms.parseEncryptedMessagePackage(message);
+                        byte[] plainMessageBytes = ASAPCryptoAlgorithms.decryptPackage(encryptedMessagePackage, sharkPKIComponent);
 
                         GroupCredentialMessage groupCredentialMessage = GroupCredentialMessage.deserialize(plainMessageBytes);
 
@@ -192,11 +209,11 @@ public class SharkPkiSecurity implements ShiverSecurity, ASAPMessageReceivedList
                             messageReceiver.onReceiveGroupCredentials(groupCredentialMessage);
                         }
                     } catch (Exception e) {
-                        for (ShiverEventListener messageReceiver : messageReceivers) {
-                            messageReceiver.onErrorReceivingGroupCredentialMessage(path, e);
-                        }
-
                         Log.writeLogErr(this, "Error receiving groupCredentialMessage and doing the upflow stage", e.getMessage());
+
+                        for (ShiverEventListener messageReceiver : messageReceivers) {
+                            messageReceiver.onErrorReceivingGroupCredentialMessage(asapMessages.getURI().toString(), e);
+                        }
                     }
                 }
             }
@@ -206,7 +223,8 @@ public class SharkPkiSecurity implements ShiverSecurity, ASAPMessageReceivedList
                     byte[] message = messages.next();
 
                     try {
-                        byte[] plainMessageBytes = ASAPCryptoAlgorithms.decryptAsymmetric(message, sharkPKIComponent);
+                        ASAPCryptoAlgorithms.EncryptedMessagePackage encryptedMessagePackage = ASAPCryptoAlgorithms.parseEncryptedMessagePackage(message);
+                        byte[] plainMessageBytes = ASAPCryptoAlgorithms.decryptPackage(encryptedMessagePackage, sharkPKIComponent);
 
                         GroupCredentialMessage groupCredentialMessage = GroupCredentialMessage.deserialize(plainMessageBytes);
 
@@ -225,16 +243,13 @@ public class SharkPkiSecurity implements ShiverSecurity, ASAPMessageReceivedList
                             messageReceiver.onReceivedGroupKey(groupCredentialMessage.getGroupId());
                         }
                     } catch (Exception e) {
-                        for (ShiverEventListener messageReceiver : messageReceivers) {
-                            messageReceiver.onErrorReceivingGroupCredentialMessage(path, e);
-                        }
-
                         Log.writeLogErr(this, "Error receiving groupCredentialMessage and doing the broadcast stage", e.getMessage());
+
+                        for (ShiverEventListener messageReceiver : messageReceivers) {
+                            messageReceiver.onErrorReceivingGroupCredentialMessage(asapMessages.getURI().toString(), e);
+                        }
                     }
                 }
-            }
-            case SHIVER_ERROR -> {
-                Log.writeLogErr(this, "Error receiving message for an unknown path");
             }
         }
     }

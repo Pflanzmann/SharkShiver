@@ -41,13 +41,14 @@ public interface ShiverComponent extends SharkComponent {
      *
      * @param peerIds - a list of all peersIds that should be part of the group key.
      *                It does not matter if the owner is in this list or not. This library adds him.
+     * @return
      * @throws ShiverDHKeyGenerationException - Gets thrown if something with the DH-key generation fails
      * @throws ShiverGroupSizeException       - Gets thrown if the group size is 0 or if the only member of the group is the owner
      * @throws IOException
      * @throws ASAPException
      * @throws ShiverPeerNotVerifiedException - Gets thrown if not all peers are verifiable
      */
-    void startCreatingGroupKeyProcess(List<CharSequence> peerIds) throws ShiverDHKeyGenerationException, ShiverGroupSizeException, IOException, ASAPException, ShiverPeerNotVerifiedException;
+    CharSequence startCreatingGroupKeyProcess(List<CharSequence> peerIds) throws ShiverDHKeyGenerationException, ShiverGroupSizeException, IOException, ASAPException, ShiverPeerNotVerifiedException;
 
     /**
      * When receiving a {@link GroupCredentialMessage} the end user should accept this manually to prevent unwanted group key creations.

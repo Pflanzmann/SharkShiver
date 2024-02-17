@@ -46,13 +46,14 @@ public interface ShiverSecurity {
      * When a key is ready to use every event listener gets notified
      *
      * @param peers - the list of peers to do the exchange with
+     * @return
      * @throws ShiverGroupSizeException       - Gets thrown if the group size is 0 or if the only member of the group is the owner
      * @throws ShiverPeerNotVerifiedException - Gets thrown if not all peers are verifiable
      * @throws ShiverDHKeyGenerationException - Gets thrown if something with the DH-key generation fails
      * @throws IOException
      * @throws ASAPException
      */
-    void startKeyExchangeWithPeers(List<CharSequence> peers) throws ShiverGroupSizeException, ShiverPeerNotVerifiedException, ShiverDHKeyGenerationException, IOException, ASAPException;
+    CharSequence startKeyExchangeWithPeers(List<CharSequence> peers) throws ShiverGroupSizeException, ShiverPeerNotVerifiedException, ShiverDHKeyGenerationException, IOException, ASAPException;
 
     /**
      * When receiving a {@link GroupCredentialMessage} the end user should accept this manually to prevent unwanted group key creations.

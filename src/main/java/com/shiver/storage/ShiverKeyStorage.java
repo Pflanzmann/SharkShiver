@@ -1,4 +1,4 @@
-package com.shiver.storager;
+package com.shiver.storage;
 
 import java.security.Key;
 

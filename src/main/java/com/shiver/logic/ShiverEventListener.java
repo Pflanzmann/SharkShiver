@@ -22,7 +22,7 @@ public interface ShiverEventListener {
      * @param path      - the path the message got received on
      * @param exception - exception that got thrown when working with the message
      */
-    void onErrorReceivingGroupCredentialMessage(ShiverPaths path, Exception exception);
+    void onErrorReceivingGroupCredentialMessage(String path, Exception exception);
 
     /**
      * When a group key is ready to use this event gets called to notify every listener

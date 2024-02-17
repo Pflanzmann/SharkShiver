@@ -8,9 +8,7 @@ package com.shiver.models;
  */
 public enum ShiverPaths {
     SHIVER_GROUP_CREDENTIAL_MESSAGE_UPFLOW("shark/shiver/group_credential_message/upflow"),
-    SHIVER_GROUP_CREDENTIAL_MESSAGE_BROADCAST("shark/shiver/group_credential_message/broadcast"),
-    SHIVER_ERROR(null);
-
+    SHIVER_GROUP_CREDENTIAL_MESSAGE_BROADCAST("shark/shiver/group_credential_message/broadcast");
     private final String value;
 
     private ShiverPaths(String value) {
@@ -35,7 +33,6 @@ public enum ShiverPaths {
                 break;
             }
         }
-
         return shiverPath;
     }
 }
