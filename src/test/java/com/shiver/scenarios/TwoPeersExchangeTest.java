@@ -1,4 +1,4 @@
-package com.shiver;
+package com.shiver.scenarios;
 
 import com.shiver.components.ShiverComponent;
 import com.shiver.components.ShiverComponentFactory;
@@ -28,10 +28,9 @@ import java.security.spec.InvalidKeySpecException;
 import java.util.ArrayList;
 import java.util.List;
 
-public class IntegrationTest {
-
+public class TwoPeersExchangeTest {
     @Test
-    public void twoPeersExchange() throws SharkException, ShiverDHKeyGenerationException, ShiverGroupSizeException, IOException, ShiverPeerNotVerifiedException, NoSuchAlgorithmException, InvalidKeySpecException, InvalidKeyException, ClassNotFoundException, ShiverNoGroupKeyException, ShiverEncryptionException, ShiverDecryptionException {
+    public void twoPeersExchangeTest() throws SharkException, ShiverDHKeyGenerationException, ShiverGroupSizeException, IOException, ShiverPeerNotVerifiedException, NoSuchAlgorithmException, InvalidKeySpecException, InvalidKeyException, ShiverNoGroupKeyException, ShiverEncryptionException, ShiverDecryptionException {
         // ALICE SETUP
         CharSequence alicePeerId = "alicePeerId";
         ASAPPeer aliceMockPeer = Mockito.mock(ASAPPeer.class);
@@ -60,6 +59,7 @@ public class IntegrationTest {
 
         ShiverComponent bobShiverComponent = (ShiverComponent) new ShiverComponentFactory(bobShiverSecurity, bobShiverDHKeyPairStorageInMemo, bobShiverKeyStoreInMemo).getComponent();
 
+        // MOCK ASAP CRYPTO
         try (MockedStatic<ASAPCryptoAlgorithms> mockASAPCryptoAlgorithms = Mockito.mockStatic(ASAPCryptoAlgorithms.class)) {
             byte[] aliceEncryptedMessage = "aliceMessage".getBytes();
 
