@@ -118,6 +118,14 @@ public class ShiverPkiSecurity implements ShiverSecurity, ASAPMessageReceivedLis
         keyAgreement.init(keyPair.getPrivate());
 
         if (isLast) {
+            for (CharSequence peer : peers) {
+                if (peer != asapPeer.getPeerID()) {
+                    if (!verifyPeer(peer)) {
+                        throw new ShiverPeerNotVerifiedException();
+                    }
+                }
+            }
+
             Key key = readPublicKeyFromBytes(groupCredentialMessage.getKeys().get(asapPeer.getPeerID()));
             keyAgreement.doPhase(key, true);
 

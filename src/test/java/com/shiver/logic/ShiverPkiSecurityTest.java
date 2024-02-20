@@ -248,6 +248,7 @@ public class ShiverPkiSecurityTest {
         );
 
         Mockito.when(mockShiverDHKeyPairStorage.getOrGenerateKeyPairForGroup(TEST_GROUP_ID)).thenReturn(ownKeyPair);
+        Mockito.when(mockSharkPKIComponent.getCertificateByIssuerAndSubject(Mockito.any(), Mockito.any())).thenReturn(Mockito.mock(ASAPCertificate.class));
 
         try (MockedStatic<ASAPCryptoAlgorithms> mockedStatic = Mockito.mockStatic(ASAPCryptoAlgorithms.class)) {
             byte[] testArray = new byte[0];
