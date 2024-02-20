@@ -26,7 +26,6 @@ import java.util.*;
 
 /**
  * This class is the main implementation of the [ShiverSecurity] interface.
- * This class has no need to be loaded or stored because all data is handled by the [SharkPKIComponent] and [GroupStorage]
  */
 public class ShiverPkiSecurity implements ShiverSecurity, ASAPMessageReceivedListener {
     private ASAPPeer asapPeer;
