@@ -1,13 +1,9 @@
 package com.shiver.models;
 
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-import java.io.ObjectOutputStream;
-import java.io.Serializable;
+import java.io.*;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
-import java.util.Objects;
 
 public class GroupCredentialMessageImpl implements GroupCredentialMessage, Serializable {
     private final CharSequence groupId;
@@ -43,5 +39,16 @@ public class GroupCredentialMessageImpl implements GroupCredentialMessage, Seria
         oos.writeObject(this);
         oos.flush();
         return baos.toByteArray();
+    }
+
+    /**
+     * Static method to deserialize bytes into an {@link GroupCredentialMessageImpl} object
+     *
+     * @param messageBytes - raw bytes to serialize from
+     */
+    public static GroupCredentialMessage deserialize(byte[] messageBytes) throws IOException, ClassNotFoundException {
+        ByteArrayInputStream bais = new ByteArrayInputStream(messageBytes);
+        ObjectInputStream ois = new ObjectInputStream(bais);
+        return (GroupCredentialMessageImpl) ois.readObject();
     }
 }

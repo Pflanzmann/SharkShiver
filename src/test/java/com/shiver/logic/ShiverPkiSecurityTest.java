@@ -41,10 +41,10 @@ public class ShiverPkiSecurityTest {
     private SharkPKIComponent mockSharkPKIComponent;
     private ASAPPeer mockASAPPeer;
 
-    private String TEST_OWN_ASAP_ID = "ownASAPId";
-    private String TEST_PEER_ID_1 = "peerId1";
-    private String TEST_PEER_ID_2 = "peerId2";
-    private CharSequence TEST_GROUP_ID = "groupId";
+    private final String TEST_OWN_ASAP_ID = "ownASAPId";
+    private final String TEST_PEER_ID_1 = "peerId1";
+    private final String TEST_PEER_ID_2 = "peerId2";
+    private final CharSequence TEST_GROUP_ID = "groupId";
 
 
     @BeforeEach
@@ -136,7 +136,7 @@ public class ShiverPkiSecurityTest {
                 ASAPCryptoAlgorithms.produceEncryptedMessagePackage(Mockito.any(), Mockito.eq(TEST_PEER_ID_1), Mockito.eq(mockSharkPKIComponent));
             }, Mockito.times(1));
 
-            GroupCredentialMessage resultGroupCredential = GroupCredentialMessage.deserialize(messageCaptor.getValue());
+            GroupCredentialMessage resultGroupCredential = GroupCredentialMessageImpl.deserialize(messageCaptor.getValue());
 
             Assertions.assertEquals(resultGroupCredential.getGroupId(), result);
 
@@ -205,7 +205,7 @@ public class ShiverPkiSecurityTest {
                 ASAPCryptoAlgorithms.produceEncryptedMessagePackage(Mockito.any(), Mockito.eq(TEST_PEER_ID_2), Mockito.eq(mockSharkPKIComponent));
             }, Mockito.times(1));
 
-            GroupCredentialMessage resultGroupCredential = GroupCredentialMessage.deserialize(messageCaptor.getValue());
+            GroupCredentialMessage resultGroupCredential = GroupCredentialMessageImpl.deserialize(messageCaptor.getValue());
 
             Assertions.assertEquals(resultGroupCredential.getGroupId(), TEST_GROUP_ID);
 
@@ -266,7 +266,7 @@ public class ShiverPkiSecurityTest {
                 ASAPCryptoAlgorithms.produceEncryptedMessagePackage(Mockito.any(), Mockito.eq(TEST_PEER_ID_1), Mockito.eq(mockSharkPKIComponent));
             }, Mockito.times(1));
 
-            GroupCredentialMessage resultGroupCredential = GroupCredentialMessage.deserialize(messageCaptor.getValue());
+            GroupCredentialMessage resultGroupCredential = GroupCredentialMessageImpl.deserialize(messageCaptor.getValue());
 
             Assertions.assertEquals(resultGroupCredential.getGroupId(), TEST_GROUP_ID);
 
@@ -283,7 +283,7 @@ public class ShiverPkiSecurityTest {
     }
 
     @Test
-    public void asapMessagesReceived_successUpcast() throws ShiverDHKeyGenerationException, IOException, NoSuchAlgorithmException, InvalidKeyException {
+    public void asapMessagesReceived_successUpcast() throws ShiverDHKeyGenerationException, IOException, NoSuchAlgorithmException {
         List<CharSequence> testPeers = new ArrayList<>();
         testPeers.add(TEST_PEER_ID_1);
         testPeers.add(TEST_OWN_ASAP_ID);
@@ -353,10 +353,6 @@ public class ShiverPkiSecurityTest {
 
     @Test
     public void asapMessagesReceived_failed() throws IOException {
-        List<CharSequence> testPeers = new ArrayList<>();
-        testPeers.add(TEST_PEER_ID_1);
-        testPeers.add(TEST_OWN_ASAP_ID);
-
         byte[] testArray = "testArray".getBytes();
         ArrayList<byte[]> messages = new ArrayList<>();
         messages.add(testArray);
@@ -398,10 +394,6 @@ public class ShiverPkiSecurityTest {
 
     @Test
     public void asapMessagesReceived_failedPath() throws IOException {
-        List<CharSequence> testPeers = new ArrayList<>();
-        testPeers.add(TEST_PEER_ID_1);
-        testPeers.add(TEST_OWN_ASAP_ID);
-
         byte[] testArray = "testArray".getBytes();
         ArrayList<byte[]> messages = new ArrayList<>();
         messages.add(testArray);

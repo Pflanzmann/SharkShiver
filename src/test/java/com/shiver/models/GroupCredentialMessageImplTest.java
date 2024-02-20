@@ -32,7 +32,7 @@ public class GroupCredentialMessageImplTest {
 
         byte[] serializedMessage = groupCredentialMessage.serialize();
 
-        GroupCredentialMessage deserializedMessage = GroupCredentialMessage.deserialize(serializedMessage);
+        GroupCredentialMessage deserializedMessage = GroupCredentialMessageImpl.deserialize(serializedMessage);
 
         Assertions.assertEquals(groupCredentialMessage.getGroupId(), deserializedMessage.getGroupId());
         Assertions.assertArrayEquals(groupCredentialMessage.getPeerIds().toArray(), deserializedMessage.getPeerIds().toArray());

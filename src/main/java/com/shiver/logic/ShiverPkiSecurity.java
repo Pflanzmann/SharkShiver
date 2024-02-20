@@ -207,7 +207,7 @@ public class ShiverPkiSecurity implements ShiverSecurity, ASAPMessageReceivedLis
                         ASAPCryptoAlgorithms.EncryptedMessagePackage encryptedMessagePackage = ASAPCryptoAlgorithms.parseEncryptedMessagePackage(message);
                         byte[] plainMessageBytes = ASAPCryptoAlgorithms.decryptPackage(encryptedMessagePackage, sharkPKIComponent);
 
-                        GroupCredentialMessage groupCredentialMessage = GroupCredentialMessage.deserialize(plainMessageBytes);
+                        GroupCredentialMessage groupCredentialMessage = GroupCredentialMessageImpl.deserialize(plainMessageBytes);
 
                         for (ShiverEventListener messageReceiver : messageReceivers) {
                             messageReceiver.onReceiveGroupCredentials(groupCredentialMessage);
@@ -230,7 +230,7 @@ public class ShiverPkiSecurity implements ShiverSecurity, ASAPMessageReceivedLis
                         ASAPCryptoAlgorithms.EncryptedMessagePackage encryptedMessagePackage = ASAPCryptoAlgorithms.parseEncryptedMessagePackage(message);
                         byte[] plainMessageBytes = ASAPCryptoAlgorithms.decryptPackage(encryptedMessagePackage, sharkPKIComponent);
 
-                        GroupCredentialMessage groupCredentialMessage = GroupCredentialMessage.deserialize(plainMessageBytes);
+                        GroupCredentialMessage groupCredentialMessage = GroupCredentialMessageImpl.deserialize(plainMessageBytes);
 
                         KeyPair keyPair = dhKeyPairStorage.getOrGenerateKeyPairForGroup(groupCredentialMessage.getGroupId());
                         KeyAgreement keyAgreement = KeyAgreement.getInstance("DH");
