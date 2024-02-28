@@ -8,6 +8,10 @@ import java.security.KeyPair;
 import java.security.KeyPairGenerator;
 import java.util.HashMap;
 
+/**
+ * This class is an in memory implementation for the {@link ShiverDHKeyPairStorage}
+ * All data gets lost when restarting the process
+ */
 public class ShiverDHKeyPairStorageInMemo implements ShiverDHKeyPairStorage {
 
     private final HashMap<CharSequence, KeyPair> keypairs = new HashMap<>();

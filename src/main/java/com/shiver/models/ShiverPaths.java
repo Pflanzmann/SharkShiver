@@ -7,7 +7,14 @@ package com.shiver.models;
  * It also prevents typos and other mistakes associated with strings
  */
 public enum ShiverPaths {
+    /**
+     * Path representing the upflow phase
+     */
     SHIVER_GROUP_CREDENTIAL_MESSAGE_UPFLOW("shark/shiver/group_credential_message/upflow"),
+
+    /**
+     * Path representing the broadcast phase
+     */
     SHIVER_GROUP_CREDENTIAL_MESSAGE_BROADCAST("shark/shiver/group_credential_message/broadcast");
     private final String value;
 
@@ -24,6 +31,12 @@ public enum ShiverPaths {
         return value;
     }
 
+    /**
+     * Method to parse a path associated with the path stored in the {@value } field of the enum cases
+     *
+     * @param charSequence uri path
+     * @return associated element or null if no math could be find
+     */
     public static ShiverPaths parsePathByValue(String charSequence) {
         ShiverPaths shiverPath = null;
 
